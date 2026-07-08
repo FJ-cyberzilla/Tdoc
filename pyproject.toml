@@ -7,7 +7,7 @@ name = "tdoc"
 version = "2.6.0"
 description = "SOTA Termux System Integrity Diagnostics & Control HUD"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "u0_a330" }
 ]
@@ -24,3 +24,6 @@ py-modules = ["constants", "engine", "helper", "main", "manager", "report", "upd
 
 [tool.setuptools.packages.find]
 include = ["advanced*"]
+
+[tool.black]
+target-version = ['py314']

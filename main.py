@@ -1,27 +1,19 @@
 """
-TDoc Command Center - Core Application Launcher
+TDoc Platform Diagnostics - Main System Entry Gate
 """
 
 import sys
+import manager
 
-# Safety verification to ensure execution is containerized or package-relative
-if sys.version_info < (3, 7):
-    print("CRITICAL ERROR: TDoc requires Python 3.7+ features for subprocess management.")
-    sys.exit(1)
 
-try:
-    import manager
-except ImportError:
-    # Handles direct execution gracefully if not called as a module flag
-    import manager
-
-def run_system_main() -> None:
-    """Initializes environment bindings and transfers execution control to the HUD."""
+def main():
+    """Initializes the security sandbox environment and hands off control to the HUD."""
     try:
-        manager.launch_interface_loop()
-    except Exception as fatal_err:
-        print(f"FATAL SYSTEM ERROR DURING APPLICATION RUNTIME: {fatal_err}")
+        manager.start_hud_router()
+    except Exception as e:
+        print(f"FATAL SYSTEM ERROR DURING APPLICATION RUNTIME: {e}")
         sys.exit(1)
 
+
 if __name__ == "__main__":
-    run_system_main()
+    main()

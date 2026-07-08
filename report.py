@@ -20,7 +20,7 @@ def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
     """Compiles a responsive, modern dark/orange terminal operational dashboard."""
     # JSON dump for embedding raw state safely into the document body
     raw_json = json.dumps(data, indent=2)
-    
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,7 +94,7 @@ def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
 def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Path]:
     """Pipes memory state metrics to structured file volumes inside the workspace."""
     reports_dir = Path(HOME) / "TDoc" / "reports"
-    
+
     try:
         reports_dir.mkdir(parents=True, exist_ok=True)
     except OSError as err:
@@ -111,17 +111,27 @@ def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Pat
     try:
         # Write 1: Structured Data Blob
         json_file.write_text(json.dumps(snapshot_data, indent=4), encoding="utf-8")
-        
+
         # Write 2: Interactive Orange Spectrum HUD HTML Dashboard
         html_markup = _build_html_template(snapshot_data, timestamp)
         html_file.write_text(html_markup, encoding="utf-8")
-        
-        console.print(f"\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]")
-        console.print(f"  [bold #FF6D00]▪ Data Node Log :[/bold #FF6D00] [grey62]{json_file.name}[/grey62]")
-        console.print(f"  [bold #FF6D00]▪ Visual Dashboard:[/bold #FF6D00] [grey62]{html_file.name}[/grey62]")
+
+        console.print(
+            f"\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]"
+        )
+        console.print(
+            f"  [bold #FF6D00]▪ Data Node Log :[/bold #FF6D00] [grey62]{json_file.name}[/grey62]"
+        )
+        console.print(
+            f"  [bold #FF6D00]▪ Visual Dashboard:[/bold #FF6D00] [grey62]{html_file.name}[/grey62]"
+        )
 
     except OSError as io_err:
-        console.print(f"[status.critical]✗ Telemetry Pipeline Write Exception: {io_err}[/status.critical]")
-        logger.error("IO operation barrier encountered during report mapping: %s", io_err)
+        console.print(
+            f"[status.critical]✗ Telemetry Pipeline Write Exception: {io_err}[/status.critical]"
+        )
+        logger.error(
+            "IO operation barrier encountered during report mapping: %s", io_err
+        )
 
     return json_file, html_file

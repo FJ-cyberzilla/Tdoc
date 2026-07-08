@@ -1,133 +1,145 @@
 """
-TDoc Command Center - UI Terminal Control HUD Loop
+TDoc Core Management Interface - Hardened HUD Router with Custom System Branding
 """
 
 import os
 import sys
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.theme import Theme
+import shutil
+from advanced import environment, health, network, security
+from constants import __version__
 
-import constants
-import helper
-import engine
-import updater
-from advanced import environment, network, health, security
+# High-Fidelity ANSI Engine Color Channels
+ORANGE = "\033[38;5;208m"
+GREEN = "\033[32m"
+CYAN = "\033[36m"
+RED = "\033[31m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
 
-console = Console(theme=Theme(constants.ORANGE_THEME))
 
-
-def clear_terminal() -> None:
-    """Refreshes the control panel layout without screen tearing."""
+def clear_screen():
+    """Wipes terminal view buffer cleanly across platforms."""
     os.system("clear" if os.name != "nt" else "cls")
 
 
-def generate_banner() -> Panel:
-    """Builds the SOTA Orange Spectrum tactical HUD layout."""
-    banner = Text()
-    banner.append(" 🗲  T D O C  ::  P L A T F O R M  D I A G N O S T I C S  🗲 \n", style="banner")
-    banner.append(" [ Production Telemetry HUD - Active Terminal Engine ] ", style="text.muted")
+def get_menu_device_string() -> str:
+    """Quickly resolves device identity for menu header real estate."""
+    if bool(shutil.which("getprop")):
+        man = environment.get_prop("ro.product.manufacturer").upper() or "ANDROID"
+        mod = environment.get_prop("ro.product.model") or "DEVICE"
+        return f"{man} {mod}"
+    return "GENERIC HOST"
 
-    return Panel(
-        banner,
-        border_style="panel.border",
-        title="[status.warning]HUD_STATUS: LIVE[/status.warning]",
-        title_align="right",
+
+def show_hud():
+    """Renders an expanded cybernetic HUD layout with custom system ID and metrics."""
+    clear_screen()
+    dev_id = get_menu_device_string()
+    bat = health.get_battery_metrics()
+
+    cap = bat.get("capacity", "UNKNOWN")
+    temp = bat.get("temp", "UNKNOWN")
+    state = bat.get("status", "UNKNOWN")
+
+    print(
+        f"{ORANGE}╭──────────────────────────────────────────────────────────────────────────╮{RESET}"
+    )
+    print(
+        f"{ORANGE}│{RESET}         {BOLD}{ORANGE}🗲  T D O C  ::  P L A T F O R M  M A T R I X  (v{__version__})  🗲{RESET}"
+        f"    {ORANGE}│{RESET}"
+    )
+
+    # Custom Brand ID Line
+    brand_line = "FJ™ Cyberzilla Cybertronic Systems®"
+    pad_b = (72 - len(brand_line)) // 2
+    l_pad_b = " " * pad_b
+    r_pad_b = " " * (72 - len(brand_line) - pad_b)
+    print(
+        f"{ORANGE}│{RESET}{l_pad_b}{BOLD}{ORANGE}{brand_line}{RESET}{r_pad_b}{ORANGE}│{RESET}"
+    )
+
+    # Target Device Identity Line
+    target_line = f"[ Target Unit: {dev_id} ]"
+    pad1 = (72 - len(target_line)) // 2
+    l_pad1 = " " * pad1
+    r_pad1 = " " * (72 - len(target_line) - pad1)
+    print(f"{ORANGE}│{RESET}{l_pad1}{DIM}{target_line}{RESET}{r_pad1}{ORANGE}│{RESET}")
+
+    # Live Power Grid Metrics
+    power_line = f"Fuel Gauge: {cap}  •  Core Temp: {temp}  •  State: {state}"
+    pad2 = (72 - len(power_line)) // 2
+    l_pad2 = " " * pad2
+    r_pad2 = " " * (72 - len(power_line) - pad2)
+    print(f"{ORANGE}│{RESET}{l_pad2}{GREEN}{power_line}{RESET}{r_pad2}{ORANGE}│{RESET}")
+
+    print(
+        f"{ORANGE}╰──────────────────────────────────────────────────────────────────────────╯{RESET}"
+    )
+    print(
+        f"{CYAN}╭─ Navigation Matrix ──────────────────────────────────────────────────────╮{RESET}"
+    )
+    print(
+        f"{CYAN}│{RESET}  {GREEN}[1]{RESET} Platform Metrics "
+        f"(Hardware, Storage, Env)                           {CYAN}│{RESET}"
+    )
+    print(
+        f"{CYAN}│{RESET}  {GREEN}[2]{RESET} Network Topology "
+        f"(DNS Leaks, Latency, Hotspot)                      {CYAN}│{RESET}"
+    )
+    print(
+        f"{CYAN}│{RESET}  {GREEN}[3]{RESET} Host Shield Traps "
+        f"(SUID Audit, Root Isolation)                      {CYAN}│{RESET}"
+    )
+    print(
+        f"{CYAN}│{RESET}  {GREEN}[4]{RESET} Workspace Integrity Check "
+        f"(Git Status, Sync)                        {CYAN}│{RESET}"
+    )
+    print(
+        f"{CYAN}│{RESET}  {RED}[0]{RESET} System Termination "
+        f"(Exit Console Master)                            {CYAN}│{RESET}"
+    )
+    print(
+        f"{CYAN}╰──────────────────────────────────────────────────────────────────────────╯{RESET}"
     )
 
 
-def display_menu() -> None:
-    """Renders the keypad matrix index rules using the custom theme variables."""
-    options = (
-        " [bold #FF6D00][1][/bold #FF6D00] System Platform Matrix   (Hardware, Storage, Environment)\n"
-        " [bold #FF6D00][2][/bold #FF6D00] Advanced Network Core   (Topology, DNS Leak, Latency)\n"
-        " [bold #FF6D00][3][/bold #FF6D00] Privacy & Host Security (SUID, Hijack Traps, Root Check)\n"
-        " [bold #FF6D00][4][/bold #FF6D00] Workspace Sync Engine   (Git Health, System Auto-Update)\n"
-        " [bold #FF3D00][0][/bold #FF3D00] Shut Down System Diagnostics Terminal Console"
-    )
-    console.print(Panel(
-        options,
-        title="[text.primary]Keypad Navigation Access Matrix[/text.primary]",
-        title_align="left",
-        border_style="#FF9100",
-        expand=False
-    ))
-
-
-def launch_interface_loop() -> None:
-    """Central processing terminal command loop with execution safety gates."""
+def start_hud_router():
+    """Intercepts terminal tokens and routes to low-level modules safely."""
     while True:
-        clear_terminal()
-        console.print(generate_banner())
-        console.print("")
-        display_menu()
-        console.print("")
-
+        show_hud()
         try:
-            choice = console.input("[text.primary]TDoc@Termux ⨠ [/text.primary]").strip()
-        except (KeyboardInterrupt, EOFError):
-            console.print("\n[status.critical]🗲 System exit signature captured.[/status.critical]")
+            choice = input(f"\n{ORANGE}TDoc@Termux{RESET} ⨠ ").strip()
+        except KeyboardInterrupt, EOFError:
+            print(f"\n{RED}[-]{RESET} Interface interrupted. Aborting execution.")
             sys.exit(0)
 
-        console.print("")
-
+        clear_screen()
         if choice == "1":
-            with helper.track_activity("Analyzing environment hardware layers..."):
-                console.print("\n[bold #FF6D00]📈 --- [ HARDWARE & BASE PLATFORM ] ---[/bold #FF6D00]")
-                health.get_cpu_and_mem_usage()
-                health.run_storage_io_benchmark()
-                health.read_thermal_zones()
-                environment.verify_storage_setup()
-                environment.verify_termux_api_subsystem()
-                environment.check_boot_scripts()
-                environment.validate_locale_and_encoding()
-
+            environment.run_environment_checks()
+            health.run_health_checks()
         elif choice == "2":
-            # The engine runs its own local progressive tracking metrics panels
-            console.print("\n[bold #FF6D00]📡 --- [ TOPOLOGY & DISCOVERY ] ---[/bold #FF6D00]")
-            network.get_wifi_analysis()
-            network.run_dns_leak_test()
-            network.check_ipv6_readiness()
-            network.check_firewall_rules()
-            engine.scan_ports_with_progress()
-            engine.run_advanced_ping()
-
+            network.run_network_checks()
         elif choice == "3":
-            with helper.track_activity("Evaluating systemic privilege containment..."):
-                console.print("\n[bold #FF6D00]🔒 --- [ PRIVACY & INTEGRITY AUDIT ] ---[/bold #FF6D00]")
-                security.run_comprehensive_security_audit()
-
+            security.run_security_checks()
         elif choice == "4":
-            with helper.track_activity("Analyzing directory file structures for drag..."):
-                git_status = helper.diagnose_git_overhead()
+            try:
+                import updater
 
-            if git_status["vulnerable"]:
-                console.print(Panel(
-                    f"[status.critical]⚠️ Overhead Leak Found:[/status.critical] {git_status['reason']}\n"
-                    f"[text.primary]Target Overhead File Volume:[/text.primary] {git_status['file_count']} files.\n"
-                    f"[status.warning]Remedy Key:[/status.warning] {git_status['remedy']}",
-                    border_style="#FF3D00",
-                    title="[status.critical]Performance Exception[/status.critical]"
-                ))
-            else:
-                console.print("[status.optimal]✓ Workspace structural index is pristine.[/status.optimal]")
-
-            console.print("")
-            update_available, msg = updater.check_for_updates()
-            if update_available:
-                console.print(f"[status.warning]🗲 Patch Pending: {msg}[/status.warning]")
-                confirm = console.input("[text.primary]Apply update patch? (y/N): [/text.primary]").lower()
-                if confirm == "y":
-                    updater.perform_upgrade()
-            else:
-                console.print(f"[status.optimal]✓ Upstream Status: {msg}[/status.optimal]")
-
+                if hasattr(updater, "run_updater_checks"):
+                    updater.run_updater_checks()
+                else:
+                    print(f"\n{GREEN}✓{RESET} Workspace Core Index: Pristine.")
+            except Exception as e:
+                print(f"\n{RED}❌{RESET} Workspace Check Deferred: {e}")
         elif choice == "0":
-            console.print("[status.warning]🗲 Halting all active telemetry matrices. Console disconnected.[/status.warning]")
+            print(f"\n{GREEN}[+] Diagnostic pipeline closed safely. Clear.{RESET}\n")
             break
-
         else:
-            console.print("[status.critical]❌ Invalid keypad execution routing identifier.[/status.critical]")
+            print(f"\n{RED}[-] Invalid Navigation Token. Try again.{RESET}")
 
-        console.input("\n[text.muted]Press Enter to route back to Master Terminal Matrix...[/text.muted]")
+        input(f"\n{DIM}Press Enter to return to HUD Matrix...{RESET}")
+
+
+if __name__ == "__main__":
+    start_hud_router()

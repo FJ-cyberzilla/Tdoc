@@ -14,7 +14,7 @@ STATUS_RED     = \033[0;31m
 INFO_CYAN      = \033[0;36m
 NC             = \033[0m
 
-.PHONY: default help install run format clean diagnose
+.PHONY: default help install run format clean diagnose check-deps pack-install
 
 default: help
 
@@ -28,11 +28,13 @@ help:
 	@echo "  throttling, tracking active network DNS leaks, and isolation security traps."
 	@echo ""
 	@echo "$(DARK_AMBER)Operational Core Targets:$(NC)"
-	@echo "  $(LIGHT_ORANGE)make install$(NC)   - Sets up system dependencies, 'termux-api', & pip assets."
-	@echo "  $(LIGHT_ORANGE)make run$(NC)       - Boots the interactive control center telemetry HUD loop."
-	@echo "  $(LIGHT_ORANGE)make format$(NC)    - Enforces the strict 100-character line rule via Black."
-	@echo "  $(LIGHT_ORANGE)make diagnose$(NC)  - Executes static workspace integrity & safety check gates."
-	@echo "  $(LIGHT_ORANGE)make clean$(NC)     - Flushes bytecode artifacts, tracking layers, & cache blocks."
+	@echo "  $(LIGHT_ORANGE)make install$(NC)    - Sets up system dependencies, 'termux-api', & pip assets."
+	@echo "  $(LIGHT_ORANGE)make check-deps$(NC) - Audits presence of optional system utility layers."
+	@echo "  $(LIGHT_ORANGE)make run$(NC)        - Boots the interactive telemetry HUD control loop."
+	@echo "  $(LIGHT_ORANGE)make format$(NC)     - Enforces the strict 100-character line rule via Black."
+	@echo "  $(LIGHT_ORANGE)make diagnose$(NC)   - Executes static workspace integrity & safety check gates."
+	@echo "  $(LIGHT_ORANGE)make clean$(NC)      - Flushes bytecode artifacts, tracking layers, & cache blocks."
+	@echo "  $(LIGHT_ORANGE)make pack-install$(NC)- Compiles and registers global 'tdoc' execution alias."
 	@echo "$(PRIMARY_ORANGE)====================================================================$(NC)"
 
 install:
@@ -43,7 +45,14 @@ install:
 	$(PIP) install --editable .
 	@echo "$(STATUS_GREEN)✅ Dependency matrix bound and linked to global paths successfully.$(NC)"
 
-run:
+check-deps:
+	@if command -v termux-battery-status >/dev/null 2>&1; then \
+	    echo "$(STATUS_GREEN)[+] Termux API bridge verified and active.$(NC)"; \
+	else \
+	    echo "$(STATUS_RED)[-] Notice: 'termux-api' binary is missing. Install via 'pkg install termux-api'.$(NC)"; \
+	fi
+
+run: check-deps
 	@$(PYTHON) -m main
 
 format:
@@ -69,10 +78,10 @@ clean:
 
 # --- GLOBAL UTILITY COMPILATION ---
 pack-install:
-	@echo -e "\033[38;5;208m📦 Compiling TDoc Core into Global Utility Module...\033[0m"
+	@echo "$(PRIMARY_ORANGE)📦 Compiling TDoc Core into Global Utility Module...$(NC)"
 	@mkdir -p $(PREFIX)/bin
 	@echo '#!/data/data/com.termux/files/usr/bin/sh' > $(PREFIX)/bin/tdoc
 	@echo 'export PYTHONPATH="$$HOME/TDoc:$$PYTHONPATH"' >> $(PREFIX)/bin/tdoc
 	@echo 'python3 $$HOME/TDoc/main.py "$$@"' >> $(PREFIX)/bin/tdoc
 	@chmod +x $(PREFIX)/bin/tdoc
-	@echo -e "\033[0;32m✅ Global execution layer bound. Run 'tdoc' from anywhere.\033[0m"
+	@echo "$(STATUS_GREEN)✅ Global execution layer bound. Run 'tdoc' from anywhere.$(NC)"

@@ -1,77 +1,65 @@
 """
-TDoc Command Center - Termux Platform Infrastructure & Environment Auditing
+TDoc Environment Subsystem - System Profiler & Termux Ecosystem Analysis
 """
 
 import os
-from pathlib import Path
-from typing import Dict, Any
-from rich.console import Console
-from rich.theme import Theme
-from constants import ORANGE_THEME, HOME, PREFIX
-from helper import run_pure_command
+import platform
+import shutil
+import subprocess
 
-console = Console(theme=Theme(ORANGE_THEME))
 
-def verify_storage_setup() -> bool:
-    """Validates that termux-setup-storage has run and symlinks are active."""
-    storage_path = Path(HOME) / "storage"
-    if not storage_path.is_dir():
-        console.print("  [status.critical]✗ Shared Storage Symlink Absent[/status.critical]")
-        console.print("    [text.muted]Remedy: Run 'termux-setup-storage' to grant access.[/text.muted]")
-        return False
-        
-    # Check if links point outward to shared memory structures
-    is_linked = any(p.is_symlink() for p in storage_path.iterdir() if p.is_symlink())
-    if is_linked:
-        console.print("  [status.optimal]✓ Shared Storage Mount: ACCESSIBLE & SYMLINKED[/status.optimal]")
-        return True
-    
-    console.print("  [status.warning]⚠️ Storage Warning:[/status.warning] Directory exists but links are broken.")
-    return False
+def get_prop(key: str) -> str:
+    """Natively resolves an Android system property value."""
+    try:
+        res = subprocess.run(
+            ["getprop", key], capture_output=True, text=True, check=False
+        )
+        return res.stdout.strip() if res.returncode == 0 else ""
+    except Exception:
+        return ""
 
-def verify_termux_api_subsystem() -> Dict[str, Any]:
-    """Tests communication with the underlying Termux:API Android wrapper service."""
-    status = {"installed": False, "responsive": False}
-    if Path(PREFIX).joinpath("bin", "termux-api-start").exists() or shutil.which("termux-battery-status"):
-        status["installed"] = True
-        
-        # Test responsiveness with a tight timeout to avoid hanging the HUD
-        stdout, _ = run_pure_command(["termux-api-start"], timeout=1.0)
-        stdout_bat, _ = run_pure_command(["termux-battery-status"], timeout=1.5)
-        if stdout_bat:
-            status["responsive"] = True
-            console.print("  [status.optimal]✓ Termux:API Ecosystem: CONNECTED & RESPONSIVE[/status.optimal]")
-        else:
-            console.print("  [status.warning]⚠️ Termux:API Bridge Lagging:[/status.warning] Binaries exist but service timed out.")
+
+def run_environment_checks() -> dict:
+    """Evaluates cross-platform environmental properties and ecosystem status."""
+    print("\n🖥 --- [ MACHINE IDENTITY & SYSTEM PLATFORM ] ---")
+
+    # 1. Cross-Platform Hardware & OS Profiler
+    is_android = bool(shutil.which("getprop"))
+
+    if is_android:
+        manufacturer = get_prop("ro.product.manufacturer").upper() or "ANDROID"
+        model = get_prop("ro.product.model") or "DEVICE"
+        version = get_prop("ro.build.version.release")
+        sdk = get_prop("ro.build.version.sdk")
+        build_id = get_prop("ro.build.id")
+
+        print(f"  ✓ Device Identity         : {manufacturer} {model}")
+        print(f"  ✓ Android Runtime Version : OS {version} (API Level {sdk})")
+        print(f"  ✓ System Compile Build ID : {build_id}")
     else:
-        console.print("  [status.warning]▪ Termux:API Subsystem: NOT DEPLOYED[/status.warning]")
-    return status
+        sys_type = platform.system()
+        release = platform.release()
+        arch = platform.machine()
+        print(f"  ✓ Device Identity         : Generic {sys_type} Host")
+        print(f"  ✓ OS Kernel Release       : {release} ({arch})")
+        print(f"  ✓ System Compile Build ID : STABLE_PC_INSTANCE")
 
-def check_boot_scripts() -> None:
-    """Audits Termux:Boot structural persistence rules and scripts."""
-    boot_dir = Path(HOME) / ".termux" / "boot"
-    if not boot_dir.is_dir():
-        console.print("  [text.muted]▪ Termux:Boot Startup Nodes: Inactive (Directory absent)[/text.muted]")
-        return
+    # 2. Termux-Specific Environment Verification
+    print("  ✓ Terminal Encoding Node  : " + os.environ.get("LANG", "en_US.UTF-8"))
 
-    scripts = [s for s in boot_dir.iterdir() if s.is_file()]
-    if scripts:
-        console.print(f"  [status.optimal]✓[/status.optimal] Termux:Boot Persistence: {len(scripts)} Active Boot Scripts Found")
-        for s in scripts:
-            # Check for executable bit safety
-            is_exec = os.access(s, os.X_OK)
-            status_str = "[status.optimal]EXEC[/status.optimal]" if is_exec else "[status.critical]NON-EXEC[/status.critical]"
-            console.print(f"    ⨠ {s.name} ({status_str})")
-    else:
-        console.print("  [text.muted]▪ Termux:Boot Persistence: Configured directory is empty.[/text.muted]")
+    api_connected = (
+        "CONNECTED" if shutil.which("termux-battery-status") else "UNAVAILABLE"
+    )
+    print(f"  ▪ Termux:API Ecosystem    : {api_connected}")
 
-def validate_locale_and_encoding() -> None:
-    """Validates env encoding limits to prevent text clipping in the rich HUD."""
-    lang = os.environ.get("LANG", "Unknown")
-    is_utf8 = "utf-8" in lang.lower() or "utf8" in lang.lower()
-    
-    if is_utf8:
-        console.print(f"  [status.optimal]✓[/status.optimal] Terminal Environment Encoding: [text.primary]{lang}[/text.primary] (UTF-8 Compliant)")
-    else:
-        console.print(f"  [status.critical]✗ Non-UTF8 Locale Detected ({lang})[/status.critical]")
-        console.print("    [text.muted]Fix: Export LANG=en_US.UTF-8 inside your shell profiles.[/text.muted]")
+    boot_dir = "/data/data/com.termux/files/home/.termux/boot"
+    boot_status = (
+        "ACTIVE" if os.path.exists(boot_dir) else "INACTIVE (No startup hooks)"
+    )
+    print(f"  ▪ Termux:Boot Nodes       : {boot_status}")
+
+    return {
+        "is_android": is_android,
+        "platform_system": platform.system(),
+        "platform_machine": platform.machine(),
+    }
