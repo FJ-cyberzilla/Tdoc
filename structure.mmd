@@ -1,0 +1,17 @@
+graph TD
+    A[Global Terminal Engine: tdoc] -->|Executes Sandbox| B(main.py Entry Point)
+    B -->|Transfers Control| C{manager.py HUD Menu}
+    
+    C -->|Option 1| D[advanced/environment.py]
+    C -->|Option 1| E[advanced/health.py]
+    C -->|Option 2| F[advanced/network.py]
+    C -->|Option 3| G[advanced/security.py]
+    C -->|Option 4| H[updater.py Engine]
+    C -->|Option 0| I[System Shut Down]
+    
+    D & E & F & G -->|Telemetry Stream| J(report.py Data Sink)
+    J -->|Automated Directory Route| K[(reports/*.json Capture Log)]
+    
+    style A fill:#FF6D00,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#1A1A1A,stroke:#FF6D00,stroke-width:2px,color:#FF6D00
+    style K fill:#0D47A1,stroke:#000,stroke-width:1px,color:#fff

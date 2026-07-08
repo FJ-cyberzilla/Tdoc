@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tdoc"
+version = "2.6.0"
+description = "SOTA Termux System Integrity Diagnostics & Control HUD"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    { name = "u0_a330" }
+]
+dependencies = [
+    "requests>=2.31.0",
+    "rich>=13.7.0"
+]
+
+[project.scripts]
+tdoc = "main:run_system_main"
+
+[tool.setuptools]
+py-modules = ["constants", "engine", "helper", "main", "manager", "report", "updater"]
+
+[tool.setuptools.packages.find]
+include = ["advanced*"]
