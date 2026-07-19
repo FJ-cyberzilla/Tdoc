@@ -1,89 +1,184 @@
 """
-TDoc Security Subsystem - Hardened Privilege Audit with Benign LD_PRELOAD Recognition
+TDoc Security Subsystem – Hardened Privilege Audit
 """
 
 import os
-import sys
-import time
-
-# ANSI Color Matrix
-ORANGE = "\033[38;5;208m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-CYAN = "\033[36m"
-RED = "\033[31m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
+import stat
+import subprocess
 
 
-def spin_progress(message: str, duration: float = 0.8):
-    """Renders a smooth fluid terminal spinner animation during security scans."""
-    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    end_time = time.time() + duration
-    i = 0
-    while time.time() < end_time:
-        sys.stdout.write(f"\r  {ORANGE}{frames[i % len(frames)]}{RESET}  {message}")
-        sys.stdout.flush()
-        time.sleep(0.1)
-        i += 1
-    sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
-    sys.stdout.flush()
+def check_root_presence() -> tuple:
+    """
+    Verifies existence and privilege status of common 'su' binaries.
+    Returns (bool, str).
+    """
+    su_paths = [
+        "/system/bin/su",
+        "/system/xbin/su",
+        "/sbin/su",
+        "/usr/bin/su",
+        "/su/bin/su",
+        "/data/adb/magisk/su",
+    ]
+    found_nonsetuid = []
+    errors = []
+
+    for path in su_paths:
+        try:
+            st = os.stat(path)
+            if not stat.S_ISREG(st.st_mode):
+                continue
+            if st.st_mode & stat.S_ISUID:
+                return True, f"DETECTED – setuid root at {path}"
+            found_nonsetuid.append(path)
+        except FileNotFoundError:
+            continue
+        except PermissionError:
+            errors.append(f"{path} (permission denied)")
+        except Exception as e:
+            errors.append(f"{path} ({e})")
+
+    if found_nonsetuid:
+        return False, f"Found but NO setuid bit: {', '.join(found_nonsetuid)}"
+    if errors:
+        return False, f"Could not read all paths: {'; '.join(errors)}"
+    return False, "PRISTINE (No su binary found)"
 
 
-def check_root_presence() -> bool:
-    """Verifies binary pointers for root access privileges."""
-    for path in ["/system/bin/su", "/system/xbin/su", "/sbin/su", "/usr/bin/su"]:
-        if os.path.exists(path):
-            return True
-    return False
+def check_selinux_status() -> str:
+    """
+    Reads actual SELinux enforcement status.
+    Returns a descriptive string.
+    """
+    status = None
+
+    # Method 1: read directly from selinuxfs
+    enforce_path = "/sys/fs/selinux/enforce"
+    try:
+        with open(enforce_path, "r", encoding="utf-8") as f:
+            val = f.read().strip()
+            if val == "1":
+                status = "Enforcing (Strict Sandbox active)"
+            elif val == "0":
+                status = "Permissive (SELinux is loaded but not enforcing)"
+            else:
+                status = f"Unknown SELinux state (enforce file: {val})"
+    except (FileNotFoundError, PermissionError):
+        pass
+    except Exception:
+        pass
+
+    if status is not None:
+        return status
+
+    # Method 2: use getenforce command
+    try:
+        out = subprocess.check_output(
+            ["getenforce"], stderr=subprocess.DEVNULL, timeout=2
+        )
+        out_status = out.decode().strip()
+        if out_status == "Enforcing":
+            status = "Enforcing (Strict Sandbox active)"
+        elif out_status == "Permissive":
+            status = "Permissive (SELinux is loaded but not enforcing)"
+        elif out_status == "Disabled":
+            status = "Disabled (SELinux not loaded)"
+        else:
+            status = f"SELinux status: {out_status}"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    except Exception:
+        pass
+
+    if status is not None:
+        return status
+
+    # Method 3: check if selinuxfs is mounted
+    try:
+        mounts = subprocess.check_output(
+            ["mount"], stderr=subprocess.DEVNULL, timeout=2
+        ).decode()
+        if "selinuxfs" in mounts:
+            status = "SELinux filesystem mounted but state unknown"
+    except Exception:
+        pass
+
+    if status is not None:
+        return status
+
+    return "SELinux not detected (could not determine status)"
 
 
 def check_ld_preload() -> tuple:
-    """Evaluates LD_PRELOAD status and filters for standard Termux-exec libraries."""
-    preload = os.environ.get("LD_PRELOAD", "")
+    """
+    Evaluates LD_PRELOAD variable, splits into components,
+    and checks for trusted Termux libraries.
+    Returns (is_active: bool, message: str).
+    """
+    preload = os.environ.get("LD_PRELOAD", "").strip()
     if not preload:
         return False, "INACTIVE (No preloaded injection vectors)"
 
-    if "libtermux" in preload or "libtermux-exec" in preload:
-        return True, f"ACTIVE (Trusted Termux Core: {preload})"
+    parts = preload.replace(" ", ":").split(":")
+    parts = [p for p in parts if p]
 
-    return True, f"ACTIVE - External Hook: {preload}"
+    termux_libs = {"libtermux-exec.so", "libtermux.so"}
+    trusted = []
+    external = []
+    for lib in parts:
+        base = os.path.basename(lib)
+        if base in termux_libs:
+            trusted.append(lib)
+        else:
+            external.append(lib)
+
+    if trusted and not external:
+        return True, f"ACTIVE (Trusted Termux Core: {', '.join(trusted)})"
+    if trusted and external:
+        return (
+            True,
+            f"ACTIVE – Mixed (Trusted: {', '.join(trusted)} | External: {', '.join(external)})",
+        )
+    return True, f"ACTIVE – External Hook(s): {', '.join(external)}"
 
 
-def run_security_checks():
-    """Executes host privilege security audit with proper status mapping and animation."""
-    print(f"\n{ORANGE}🛡 --- [ PRIVACY & HOST PRIVILEGE SECURITY ] ---{RESET}")
+def check_termux_suid_binaries() -> str:
+    """
+    Scans the Termux prefix binary directory for files with setuid/setgid bits.
+    """
+    prefix = os.environ.get("PREFIX", "/data/data/com.termux/files/usr")
+    bin_dir = os.path.join(prefix, "bin")
+    if not os.path.isdir(bin_dir):
+        return f"PREFIX/bin not found ({bin_dir})"
 
-    spin_progress("Scanning root binary existence gates...", 0.6)
-    has_root = check_root_presence()
-    if has_root:
-        root_str = f"{YELLOW}DETECTED (System binary mapped){RESET}"
-        root_sym = f"{YELLOW}⚠️{RESET}"
-    else:
-        root_str = f"{GREEN}PRISTINE (Unrooted container){RESET}"
-        root_sym = f"{GREEN}✓{RESET}"
-    print(f"  {root_sym} Root Binary Presence      : {root_str}")
+    suid_found = []
+    try:
+        for entry in os.scandir(bin_dir):
+            if entry.is_file(follow_symlinks=False):
+                try:
+                    st = entry.stat()
+                    if st.st_mode & (stat.S_ISUID | stat.S_ISGID):
+                        suid_found.append(entry.name)
+                except (PermissionError, OSError):
+                    pass
+    except PermissionError:
+        return "Permission denied scanning PREFIX/bin"
 
-    spin_progress("Auditing SELinux sandbox isolation...", 0.6)
-    print(
-        f"  {CYAN}▪{RESET} SELinux Isolation State   : {GREEN}Enforcing (Strict Sandbox active){RESET}"
-    )
+    if suid_found:
+        return f"WARNING – SUID/SGID binaries found: {', '.join(suid_found)}"
+    return "Pristine (No local SUID anomalies)"
 
-    spin_progress("Analyzing dynamic library injection vectors...", 0.7)
+
+def run_security_checks() -> dict:
+    """Executes host privilege security audit with real system inspection."""
+    has_root, root_msg = check_root_presence()
+    selinux_status = check_selinux_status()
     ld_active, ld_msg = check_ld_preload()
-    if "Trusted Termux Core" in ld_msg:
-        ld_sym = f"{GREEN}✓{RESET}"
-        ld_color = f"{GREEN}{ld_msg}{RESET}"
-    elif ld_active:
-        ld_sym = f"{YELLOW}⚠️{RESET}"
-        ld_color = f"{YELLOW}{ld_msg}{RESET}"
-    else:
-        ld_sym = f"{CYAN}▪{RESET}"
-        ld_color = f"{DIM}{ld_msg}{RESET}"
-    print(f"  {ld_sym} Injection Hijack Vector   : {ld_color}")
+    suid_msg = check_termux_suid_binaries()
 
-    spin_progress("Checking Termux local binary file permissions...", 0.6)
-    print(
-        f"  {GREEN}✓{RESET} Termux Binaries Isolation : {GREEN}Pristine (No local SUID anomalies){RESET}"
-    )
+    return {
+        "root_presence": {"found": has_root, "message": root_msg},
+        "selinux": selinux_status,
+        "ld_preload": {"active": ld_active, "message": ld_msg},
+        "termux_suid": suid_msg,
+    }

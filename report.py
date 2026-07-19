@@ -10,7 +10,7 @@ from typing import Dict, Any, Tuple
 
 from rich.console import Console
 from rich.theme import Theme
-from constants import ORANGE_THEME, HOME
+from constants import ORANGE_THEME  # HOME removed
 
 logger = logging.getLogger(__name__)
 console = Console(theme=Theme(ORANGE_THEME))
@@ -18,9 +18,9 @@ console = Console(theme=Theme(ORANGE_THEME))
 
 def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
     """Compiles a responsive, modern dark/orange terminal operational dashboard."""
-    # JSON dump for embedding raw state safely into the document body
     raw_json = json.dumps(data, indent=2)
 
+    # ✅ FIX: break the long string using parentheses (implicit concatenation)
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,14 +86,14 @@ def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
     </div>
     <div class="footer">TDoc Operational Control Center Core // Automated Matrix Dump</div>
 </body>
-</html>
-"""
+</html>"""
     return html_content
 
 
 def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Path]:
     """Pipes memory state metrics to structured file volumes inside the workspace."""
-    reports_dir = Path(HOME) / "TDoc" / "reports"
+    # ✅ FIX: use Path.home() instead of missing HOME constant
+    reports_dir = Path.home() / "TDoc" / "reports"
 
     try:
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -101,7 +101,6 @@ def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Pat
         logger.error("Failed creating report container folder boundary: %s", err)
         raise
 
-    # Generate persistent epoch string formatting
     epoch = int(time.time())
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
@@ -109,15 +108,14 @@ def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Pat
     html_file = reports_dir / f"tdoc_dashboard_{epoch}.html"
 
     try:
-        # Write 1: Structured Data Blob
         json_file.write_text(json.dumps(snapshot_data, indent=4), encoding="utf-8")
 
-        # Write 2: Interactive Orange Spectrum HUD HTML Dashboard
         html_markup = _build_html_template(snapshot_data, timestamp)
         html_file.write_text(html_markup, encoding="utf-8")
 
+        # ✅ FIX: removed f prefix (no interpolation)
         console.print(
-            f"\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]"
+            "\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]"
         )
         console.print(
             f"  [bold #FF6D00]▪ Data Node Log :[/bold #FF6D00] [grey62]{json_file.name}[/grey62]"

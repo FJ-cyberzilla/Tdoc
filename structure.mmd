@@ -1,17 +1,22 @@
 graph TD
     A[Global Terminal Engine: tdoc] -->|Executes Sandbox| B(main.py Entry Point)
-    B -->|Transfers Control| C{manager.py HUD Menu}
+    B -->|Instantiates| C[TDocRouter]
+    C -->|Orchestrates| D(ui_manager.py HUD)
+    C -->|Routes Actions| E{Module Registry}
+
+    E -->|Platform| F[advanced/environment.py]
+    E -->|Platform| G[advanced/health.py]
+    E -->|Network| H[advanced/network.py]
+    E -->|Security| I[advanced/security.py]
+    E -->|Updater| J[updater.py Engine]
+
+    F & G & H & I -->|Return Structured Data| C
+    C -->|Dispatch| D
     
-    C -->|Option 1| D[advanced/environment.py]
-    C -->|Option 1| E[advanced/health.py]
-    C -->|Option 2| F[advanced/network.py]
-    C -->|Option 3| G[advanced/security.py]
-    C -->|Option 4| H[updater.py Engine]
-    C -->|Option 0| I[System Shut Down]
-    
-    D & E & F & G -->|Telemetry Stream| J(report.py Data Sink)
-    J -->|Automated Directory Route| K[(reports/*.json Capture Log)]
+    E -->|Telemetry Stream| K(report.py Data Sink)
+    K -->|Automated Directory Route| L[(reports/*.json Capture Log)]
     
     style A fill:#FF6D00,stroke:#333,stroke-width:2px,color:#fff
     style C fill:#1A1A1A,stroke:#FF6D00,stroke-width:2px,color:#FF6D00
-    style K fill:#0D47A1,stroke:#000,stroke-width:1px,color:#fff
+    style D fill:#1A1A1A,stroke:#FF6D00,stroke-width:2px,color:#FF6D00
+    style L fill:#0D47A1,stroke:#000,stroke-width:1px,color:#fff

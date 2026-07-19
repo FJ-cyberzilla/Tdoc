@@ -5,7 +5,7 @@ TDoc Updater Subsystem - Workspace Integrity and Repository Synchronization
 import subprocess
 import time
 import sys
-from constants import ORANGE_THEME, GREEN, RED, CYAN, RESET, DIM
+from constants import ORANGE_THEME, GREEN, CYAN, RESET, DIM
 
 
 def spin_progress(message: str, duration: float = 0.8):

@@ -3,7 +3,7 @@ ignore=__pycache__,reports
 disable=C0114,C0115,C0116,R0903,W0718
 
 [FORMAT]
-max-line-length=100
+max-line-length=110
 
 [BASIC]
 good-names=i,j,k,ex,run,cmd,p,s,db

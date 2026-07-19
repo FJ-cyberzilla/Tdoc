@@ -5,6 +5,9 @@
 PYTHON   = python3
 PIP      = pip
 
+# Suppress sub-make directory messages
+MAKEFLAGS += --no-print-directory
+
 # ANSI Color Palette (Vintage Green/Orange Theme) – using \033
 ORANGE    = \033[38;5;208m
 LIGHT_ORANGE = \033[38;5;214m
@@ -26,7 +29,6 @@ help:
 	@printf "\n$(ORANGE)====================================================================$(NC)\n"
 	@printf "$(LIGHT_ORANGE) 🗲  T D O C  ::  P L A T F O R M  A U T O M a T I O N   🗲 $(NC)\n"
 	@printf "$(ORANGE)====================================================================$(NC)\n"
-
 	@printf "$(DARK_AMBER)$(BOLD)Functional Blueprint:$(NC)\n"
 	@printf "  TDoc runs light diagnostic  across Termux, exposing hardware\n"
 	@printf "  throttling, tracking network DNS leaks,isolation security traps.\n\n"
@@ -39,8 +41,9 @@ help:
 	@printf "  $(LIGHT_ORANGE)make diagnose$(NC)   - Full health audit: linting and structural checks.\n"
 	@printf "  $(LIGHT_ORANGE)make clean$(NC)      - Flushes bytecode, cache, and build artifacts.\n"
 	@printf "  $(LIGHT_ORANGE)make pack-install$(NC)- Compiles and registers 'tdoc' execution alias.\n"
-	@printf "  $(LIGHT_ORANGE)make brand$(NC)      - Displays the FJ™ Cybertronic Systems signature.\n"
+# The 'brand' target is intentionally hidden – not shown in help.
 	@printf "$(ORANGE)====================================================================$(NC)\n\n"
+	@$(MAKE) brand   # Show signature at the end of help
 
 install:
 	@printf "$(ORANGE)🗲 Initializing TDoc Core Infrastructure with Ruff...$(NC)\n"
@@ -102,4 +105,5 @@ pack-install:
 	@$(MAKE) brand
 
 brand:
-	@printf "$(PINK)$(BOLD)✨ FJ™ Cybertronic Systems ✨$(NC)\n\n"
+	@printf "$(PINK)$(BOLD)✨ FJ™ Cybertronic Systems ✨$(NC)\n"
+	@printf "$(DARK_AMBER)MMXXIV -- V 3.0.2$(NC)\n\n"

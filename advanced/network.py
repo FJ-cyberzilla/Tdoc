@@ -1,37 +1,10 @@
 """
-TDoc Network Subsystem - Dynamic State Mapping with Yellow/Green Status Indicators
+TDoc Network Subsystem - Dynamic State Mapping
 """
 
 import json
-import os
 import subprocess
-import sys
-import time
 import urllib.request
-
-# ANSI Color Matrix
-ORANGE = "\033[38;5;208m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-CYAN = "\033[36m"
-RED = "\033[31m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
-DIM = "\033[2m"
-
-
-def spin_progress(message: str, duration: float = 1.0):
-    """Renders a smooth fluid terminal spinner animation during network tasks."""
-    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    end_time = time.time() + duration
-    i = 0
-    while time.time() < end_time:
-        sys.stdout.write(f"\r  {ORANGE}{frames[i % len(frames)]}{RESET}  {message}")
-        sys.stdout.flush()
-        time.sleep(0.1)
-        i += 1
-    sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
-    sys.stdout.flush()
 
 
 def get_routing_topology() -> dict:
@@ -125,63 +98,27 @@ def check_termux_mirrors() -> tuple:
     ]
 
     for url in mirrors:
-        start_t = time.time()
         try:
-            urllib.request.urlopen(url, timeout=2.0)
-            latency = (time.time() - start_t) * 1000
+            with urllib.request.urlopen(url, timeout=2.0) as _:
+                pass
             domain = url.replace("https://", "")
-            return True, f"ONLINE ({domain} - {latency:.1f}ms)"
+            return True, domain
         except Exception:
             continue
 
-    return False, "UNREACHABLE (All mirror nodes timed out)"
+    return False, "All mirror nodes timed out"
 
 
-def run_network_checks():
+def run_network_checks() -> dict:
     """Executes network diagnostics inspecting routes, dynamic states, and mirror failovers."""
-    print(f"\n{ORANGE}📡 --- [ TOPOLOGY & SMART ROUTING DIAGNOSTICS ] ---{RESET}")
-
-    spin_progress("Inspecting kernel routing tables...", 0.6)
     topo = get_routing_topology()
     hotspot_active = check_hotspot_status()
-
-    # Conditional Styling for Wi-Fi State
-    if topo["wifi_active"]:
-        wifi_symbol = f"{GREEN}✓{RESET}"
-        wifi_status = f"{GREEN}ACTIVE / CONNECTED{RESET}"
-    else:
-        wifi_symbol = f"{CYAN}▪{RESET}"
-        wifi_status = f"{YELLOW}INACTIVE / UNUSED{RESET}"
-    print(f"  {wifi_symbol} Wi-Fi Interface State   : {wifi_status}")
-    print(f"  {CYAN}▪{RESET} Active Routing Fabric   : {GREEN}{topo['fabric']}{RESET}")
-
-    # Conditional Styling for Hotspot State
-    if hotspot_active:
-        hotspot_symbol = f"{GREEN}✓{RESET}"
-        hotspot_status = f"{GREEN}ACTIVE{RESET}"
-    else:
-        hotspot_symbol = f"{CYAN}▪{RESET}"
-        hotspot_status = f"{YELLOW}INACTIVE{RESET}"
-    print(f"  {hotspot_symbol} Hotspot Tethering Core  : {hotspot_status}")
-
-    spin_progress("Interrogating VPN and geolocation endpoints...", 1.0)
     vpn = check_vpn_status()
-    if vpn["active"]:
-        if_name = vpn["interface"] if vpn["interface"] != "NONE" else "TUNNEL"
-        print(
-            f"  {CYAN}▪{RESET} VPN Interception Layer  : {GREEN}ONLINE ({if_name}){RESET}"
-        )
-        print(f"  {GREEN}✓{RESET} External Telemetry IP   : {BOLD}{vpn['ip']}{RESET}")
-        print(
-            f"  {GREEN}✓{RESET} Geolocation Origin      : {BOLD}{vpn['country']}{RESET}"
-        )
-    else:
-        print(f"  {CYAN}▪{RESET} VPN Interception Layer  : {RED}OFFLINE{RESET}")
-        print(f"  {RED}x{RESET} External Telemetry IP   : {DIM}MASKED / UNKNOWN{RESET}")
-
-    spin_progress("Probing backup mirror nodes rotation array...", 0.8)
     mirror_ok, mirror_msg = check_termux_mirrors()
-    if mirror_ok:
-        print(f"  {GREEN}✓{RESET} Termux Repository Mirror: {GREEN}{mirror_msg}{RESET}")
-    else:
-        print(f"  {RED}❌{RESET} Termux Repository Mirror: {RED}{mirror_msg}{RESET}")
+
+    return {
+        "topology": topo,
+        "hotspot_active": hotspot_active,
+        "vpn": vpn,
+        "mirror": {"online": mirror_ok, "details": mirror_msg},
+    }
