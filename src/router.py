@@ -32,14 +32,15 @@ class TDocRouter:
         Raises:
             RouterError: If the action is unknown or an error occurs.
         """
-        try:
-            if action_id == "platform":
-                return self.services["platform"].run()
-            if action_id in ["network", "security", "updater"]:
-                return self.services[action_id].run()
+        service = self.services.get(action_id)
+
+        if not service:
             raise RouterError(f"Unknown action ID: {action_id}")
+
+        try:
+            return service.run()
         except Exception as e:
-            raise RouterError(f"Error routing action '{action_id}': {e}") from e
+            raise RouterError(f"Error executing action '{action_id}': {e}") from e
 
     def get_basic_info(self) -> Dict[str, Any]:
         """Provides basic system information for the HUD."""

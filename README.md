@@ -1,40 +1,40 @@
-# TDoc Platform Diagnostics
+# TDoc :: Platform Matrix
+*SOTA Termux System Integrity Diagnostics & Control HUD*
 
-TDoc is a hardened, service-oriented diagnostic platform designed for Termux environments. It provides comprehensive system health, environment, network, and security auditing with a modern terminal-based UI.
+---
 
-## Architecture
+## ⚡ Overview
+TDoc is a hardened, modular diagnostic suite designed specifically for the Termux environment. It provides real-time monitoring of system health, network topology, security auditing, and workspace synchronization, all presented through an aesthetic terminal HUD.
 
-TDoc is built on a modular, service-oriented architecture:
+## 🏗️ Architectural Core
+The system follows a strict modular architecture to ensure security, maintainability, and extensibility:
 
-*   **Orchestrator Layer (`router.py`)**: Centralized routing of diagnostic requests via dependency injection.
-*   **Service Layer (`advanced/`)**: Independent diagnostic services implementing the `DiagnosticService` interface.
-*   **UI Layer (`ui_manager.py`, `theme.py`)**: Decoupled rendering engine using `Rich` for clean, themeable output.
-*   **Integrity Layer (`updater.py`)**: Automated workspace and dependency validation.
+- **CLI Interface (`main.py`)**: The central entry gate, handling the security sandbox and application lifecycle.
+- **HUD Layer (`ui/`)**: A reactive, theme-based UI layer rendering terminal panels using `rich`.
+- **Orchestrator (`router.py`)**: A centralized routing layer decoupling the UI from system logic via the `TDocRouter`.
+- **Service Layer (`services/`)**: Focused, single-responsibility components managing:
+    - **Platform**: Hardware metrics, storage, environment.
+    - **Network**: Topology mapping, VPN detection, mirror health.
+    - **Security**: Audit of SUID, root, and SELinux posture.
+    - **Package Manager**: Efficient inventory of installed binaries.
+    - **Utility**: On-demand installation and execution of external tools (`htop`, `neofetch`).
 
-## Diagnostic Services
+## 🚀 Operations
+The project uses `uv` for deterministic dependency management and includes a comprehensive `Makefile` for orchestration.
 
-*   **PlatformService**: Aggregates environment (OS, Android properties) and hardware health (battery, storage) data.
-*   **NetworkService**: Validates global connectivity, detects VPN drag, and audits local socket availability.
-*   **SecurityService**: Performs host privilege audits, SELinux status checks, and detects potential LD_PRELOAD injection vectors.
-*   **UpdaterService**: Validates repository integrity and Git synchronization status.
+### Key Targets:
+| Command | Action |
+| :--- | :--- |
+| `make install` | Boots infrastructure and dependencies. |
+| `make run` | Starts the interactive telemetry HUD. |
+| `make lint` | Runs `ruff` static analysis. |
+| `make diagnose` | Full health audit (Lint + Structural footprint). |
+| `make clean` | Purges caches and build artifacts. |
 
-## Key Principles
+## 🛠️ Usage
+1. Initialize: `make install`
+2. Run: `make run`
+3. Navigate: Use the main menu to route diagnostics.
 
-*   **Fail-Fast**: Robust error handling via specific exceptions (`TDocError`, `UIError`).
-*   **Composition**: Usage of composite services (`PlatformService`) for clean functionality aggregation.
-*   **Security-First**: No OWASP vulnerabilities; strict isolation of system binary calls.
-*   **Testability**: Every service is designed for isolated unit testing.
-
-## Usage
-
-```bash
-# Ensure dependencies are installed
-pip install -r requirements.txt
-
-# Start the HUD
-python main.py
-```
-
-## Contributing
-
-Please adhere to the project's coding standards defined in `GEMINI.md`. All contributions must pass `make lint` (Ruff) and include corresponding unit tests.
+---
+*Developed for FJ™ Cybertronic Systems.*

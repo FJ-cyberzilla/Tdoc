@@ -23,3 +23,5 @@ CHECK_SITES = [
     {"url": "https://google.com", "name": "Google", "type": "remote"},
     {"url": "http://127.0.0.1:8080", "name": "Local", "type": "local"},
 ]
+
+SYSTEM_DEPENDENCIES = ["htop", "neofetch"]

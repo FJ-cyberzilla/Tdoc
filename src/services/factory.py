@@ -8,6 +8,8 @@ from src.services.network import NetworkService
 from src.services.security import SecurityService
 from src.services.updater import UpdaterService
 from src.services.health import HealthService
+from src.services.package_manager import PackageManagerService
+from src.services.utility import UtilityService
 
 
 class ServiceFactory:
@@ -22,4 +24,6 @@ class ServiceFactory:
             "security": SecurityService(),
             "updater": UpdaterService(),
             "health": HealthService(),
+            "package_manager": PackageManagerService(),
+            "utility": UtilityService(),
         }

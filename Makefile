@@ -63,6 +63,13 @@ check-deps:
 	else \
 		printf "$(STATUS_RED)[-] Ruff missing (install: pip install ruff)$(NC)\n"; \
 	fi
+	@for tool in htop neofetch; do \
+		if command -v $$tool >/dev/null 2>&1; then \
+			printf "$(STATUS_GREEN)[+] $$tool: OK$(NC)\n"; \
+		else \
+			printf "$(STATUS_RED)[-] $$tool missing (install: pkg install $$tool)$(NC)\n"; \
+		fi; \
+	done
 
 lint:
 	@printf "$(ORANGE)🗲 Running Ruff linter...$(NC)\n"
@@ -88,7 +95,7 @@ run: check-deps
 clean:
 	@printf "$(DARK_AMBER)🧹 Flushing workspace compilation caches and storage artifacts...$(NC)\n"
 	rm -rf __pycache__ */__pycache__ */*/__pycache__
-	rm -rf .pytest src_cache .ruff_cache .pylint.d build/ dist/ *.egg-info
+	rm -rf .pytest src_cache .ruff_cache .pylint.d build/ dist/ *.egg-info .mypy_cache
 	@printf "$(STATUS_GREEN)✨ Workspace tracking slate completely purged and reset.$(NC)\n"
 
 pack-install:

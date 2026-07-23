@@ -5,7 +5,14 @@ TDoc Network Subsystem - Dynamic State Mapping
 import json
 import subprocess
 import urllib.request
+from typing import NamedTuple
 from src.interfaces import DiagnosticService
+
+
+class MirrorResult(NamedTuple):
+    """Result of a mirror connectivity check."""
+    online: bool
+    details: str
 
 
 class NetworkService(DiagnosticService):
@@ -13,13 +20,14 @@ class NetworkService(DiagnosticService):
 
     def run(self) -> dict:
         """Executes network diagnostics inspecting routes, dynamic states, and mirror failovers."""
+        mirror = self._check_termux_mirrors()
         return {
             "topology": self._get_routing_topology(),
             "hotspot_active": self._check_hotspot_status(),
             "vpn": self._check_vpn_status(),
             "mirror": {
-                "online": self._check_termux_mirrors()[0],
-                "details": self._check_termux_mirrors()[1],
+                "online": mirror.online,
+                "details": mirror.details,
             },
         }
 
@@ -28,7 +36,7 @@ class NetworkService(DiagnosticService):
         topo = {"wifi_active": False, "fabric": "CELLULAR", "interface": "NONE"}
         try:
             res = subprocess.run(
-                ["ip", "route", "show"], capture_output=True, text=True, check=False
+                ["ip", "route", "show"], capture_output=True, text=True, check=False, timeout=2
             )
             if res.returncode == 0:
                 lines = res.stdout.splitlines()
@@ -40,19 +48,19 @@ class NetworkService(DiagnosticService):
                         elif any(c in line for c in ["rmnet", "ccmni", "rndis", "p2p"]):
                             topo["fabric"] = "CELLULAR"
                         break
-        except Exception:
+        except (subprocess.SubprocessError, OSError):
             pass
         return topo
 
     def _check_hotspot_status(self) -> bool:
         """Detects active tethering or AP interfaces in the network stack."""
         try:
-            res = subprocess.run(["ip", "link"], capture_output=True, text=True, check=False)
+            res = subprocess.run(["ip", "link"], capture_output=True, text=True, check=False, timeout=2)
             if res.returncode == 0:
                 output = res.stdout.lower()
                 if "ap0" in output or "rndis" in output:
                     return True
-        except Exception:
+        except (subprocess.SubprocessError, OSError):
             pass
         return False
 
@@ -65,7 +73,7 @@ class NetworkService(DiagnosticService):
             "interface": "NONE",
         }
         try:
-            res = subprocess.run(["ip", "link"], capture_output=True, text=True, check=False)
+            res = subprocess.run(["ip", "link"], capture_output=True, text=True, check=False, timeout=2)
             if res.returncode == 0:
                 output = res.stdout.lower()
                 for iface in ["tun", "wg0", "ppp0"]:
@@ -73,7 +81,7 @@ class NetworkService(DiagnosticService):
                         vpn_info["active"] = True
                         vpn_info["interface"] = iface.upper()
                         break
-        except Exception:
+        except (subprocess.SubprocessError, OSError):
             pass
 
         try:
@@ -87,17 +95,17 @@ class NetworkService(DiagnosticService):
                 vpn_info["country"] = data.get("country_name", "UNKNOWN")
                 if vpn_info["ip"] != "UNKNOWN":
                     vpn_info["active"] = True
-        except Exception:
+        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
             try:
                 with urllib.request.urlopen("https://ident.me", timeout=1.5) as r:
                     vpn_info["ip"] = r.read().decode("utf-8").strip()
                     vpn_info["active"] = True
-            except Exception:
+            except (urllib.error.URLError, TimeoutError):
                 pass
 
         return vpn_info
 
-    def _check_termux_mirrors(self) -> tuple:
+    def _check_termux_mirrors(self) -> MirrorResult:
         """Iterates through an array of redundant mirror nodes until a valid link is established."""
         mirrors = [
             "https://packages.termux.dev",
@@ -111,8 +119,8 @@ class NetworkService(DiagnosticService):
                 with urllib.request.urlopen(url, timeout=2.0) as _:
                     pass
                 domain = url.replace("https://", "")
-                return True, domain
-            except Exception:
+                return MirrorResult(True, domain)
+            except (urllib.error.URLError, TimeoutError):
                 continue
 
-        return False, "All mirror nodes timed out"
+        return MirrorResult(False, "All mirror nodes timed out")

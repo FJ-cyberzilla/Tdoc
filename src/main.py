@@ -13,8 +13,9 @@ def main():
     """Initializes the security sandbox environment and hands off control to the HUD."""
     services = ServiceFactory.get_services()
     router = TDocRouter(services)
+    utility_service = services.get("utility")
     try:
-        ui_manager.start_hud(router)
+        ui_manager.start_hud(router, utility_service)
     except (UIError, TDocError) as e:
         print(f"FATAL SYSTEM ERROR DURING APPLICATION RUNTIME: {e}")
         sys.exit(1)
