@@ -66,7 +66,7 @@ check-deps:
 
 lint:
 	@printf "$(ORANGE)🗲 Running Ruff linter...$(NC)\n"
-	ruff check .
+	ruff check src
 	@printf "$(STATUS_GREEN)✅ Lint passed.$(NC)\n"
 
 format:
@@ -76,19 +76,19 @@ format:
 
 diagnose: lint
 	@printf "$(INFO_CYAN)[Gate 2/2] Verifying operational directory footprint...$(NC)\n"
-	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('constants.py') else 1)" && \
+	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
 		printf "$(STATUS_GREEN)✓ Core components alignment verified.$(NC)\n" || \
 		(printf "$(STATUS_RED)✗ Structural Anomaly: Missing configuration variables.$(NC)\n" && exit 1)
 	@printf "$(STATUS_GREEN)✅ System diagnostics gate passed. Workspace structure is pristine.$(NC)\n"
 
 run: check-deps
-	@$(PYTHON) -m main
+	@$(PYTHON) -m src.main
 	@$(MAKE) brand
 
 clean:
 	@printf "$(DARK_AMBER)🧹 Flushing workspace compilation caches and storage artifacts...$(NC)\n"
 	rm -rf __pycache__ */__pycache__ */*/__pycache__
-	rm -rf .pytest_cache .ruff_cache .pylint.d build/ dist/ *.egg-info
+	rm -rf .pytest src_cache .ruff_cache .pylint.d build/ dist/ *.egg-info
 	@printf "$(STATUS_GREEN)✨ Workspace tracking slate completely purged and reset.$(NC)\n"
 
 pack-install:

@@ -10,10 +10,10 @@ from typing import Dict, Any, Tuple
 
 from rich.console import Console
 from rich.theme import Theme
-from constants import ORANGE_THEME  # HOME removed
+from src.constants import RICH_THEME_CONFIG
 
 logger = logging.getLogger(__name__)
-console = Console(theme=Theme(ORANGE_THEME))
+console = Console(theme=Theme(RICH_THEME_CONFIG))
 
 
 def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
@@ -114,9 +114,7 @@ def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Pat
         html_file.write_text(html_markup, encoding="utf-8")
 
         # ✅ FIX: removed f prefix (no interpolation)
-        console.print(
-            "\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]"
-        )
+        console.print("\n[bold green]✅ Telemetry Matrices Compiled Successfully![/bold green]")
         console.print(
             f"  [bold #FF6D00]▪ Data Node Log :[/bold #FF6D00] [grey62]{json_file.name}[/grey62]"
         )
@@ -128,8 +126,6 @@ def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Pat
         console.print(
             f"[status.critical]✗ Telemetry Pipeline Write Exception: {io_err}[/status.critical]"
         )
-        logger.error(
-            "IO operation barrier encountered during report mapping: %s", io_err
-        )
+        logger.error("IO operation barrier encountered during report mapping: %s", io_err)
 
     return json_file, html_file

@@ -13,17 +13,15 @@ authors = [
 ]
 dependencies = [
     "requests>=2.31.0",
-    "rich>=13.7.0"
+    "rich>=13.7.0",
 ]
 
 [project.scripts]
 tdoc = "main:run_system_main"
 
-[tool.setuptools]
-py-modules = ["constants", "engine", "helper", "main", "manager", "report", "updater"]
-
 [tool.setuptools.packages.find]
-include = ["advanced*"]
+where = ["src"]
+include = ["*"]
 
 [tool.black]
 target-version = ['py314']

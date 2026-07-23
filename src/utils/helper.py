@@ -6,19 +6,19 @@ import logging
 import subprocess
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
+
 from rich.console import Console
-from rich.theme import Theme
 from rich.status import Status
-from constants import ORANGE_THEME, HOME
+from rich.theme import Theme
+
+from src.constants import HOME, RICH_THEME_CONFIG
 
 logger = logging.getLogger(__name__)
-custom_theme = Theme(ORANGE_THEME)
+custom_theme = Theme(RICH_THEME_CONFIG)
 console = Console(theme=custom_theme)
 
 
-def run_pure_command(
-    cmd: List[str], timeout: float = 3.0
-) -> Tuple[Optional[str], Optional[str]]:
+def run_pure_command(cmd: List[str], timeout: float = 3.0) -> Tuple[Optional[str], Optional[str]]:
     """Executes system binaries safely with strict isolation."""
     try:
         proc = subprocess.run(

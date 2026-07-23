@@ -79,13 +79,13 @@ format:
 
 diagnose: lint
 	@printf "$(INFO_CYAN)[Gate 2/2] Verifying operational directory footprint...$(NC)\n"
-	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('constants.py') else 1)" && \
+	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
 		printf "$(STATUS_GREEN)✓ Core components alignment verified.$(NC)\n" || \
 		(printf "$(STATUS_RED)✗ Structural Anomaly: Missing configuration variables.$(NC)\n" && exit 1)
 	@printf "$(STATUS_GREEN)✅ System diagnostics gate passed. Workspace structure is pristine.$(NC)\n"
 
 run: check-deps
-	@$(PYTHON) -m main
+	@$(PYTHON) -m src.main
 	@$(MAKE) brand
 
 clean:
