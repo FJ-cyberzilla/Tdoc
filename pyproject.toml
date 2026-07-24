@@ -12,8 +12,9 @@ authors = [
     { name = "u0_a330" }
 ]
 dependencies = [
-    "requests>=2.31.0",
-    "rich>=13.7.0",
+    "requests>=2.34.2",
+    "rich>=14.1.0",
+    "urllib3>=2.7.0",
 ]
 
 [project.scripts]
