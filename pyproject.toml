@@ -7,7 +7,7 @@ name = "tdoc"
 version = "2.6.0"
 description = "SOTA Termux System Integrity Diagnostics & Control HUD"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     { name = "u0_a330" }
 ]
