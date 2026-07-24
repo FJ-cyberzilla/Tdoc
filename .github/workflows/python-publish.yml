@@ -1,0 +1,55 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  release-build:
+    name: Build release distributions
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build release distributions
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+
+  pypi-publish:
+    name: Upload release to PyPI
+    needs: [release-build]
+    runs-on: ubuntu-latest
+    
+    # 1. Required for PyPI Trusted Publishing (OIDC)
+    permissions:
+      id-token: write 
+      
+    # 2. (Optional) Connect to a GitHub Environment if configured on PyPI
+    environment:
+      name: pypi
+      url: https://pypi.org/p/<your-pypi-project-name>
+
+    steps:
+      - name: Download built distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
