@@ -22,16 +22,14 @@ class TDocRouter:
     def route_action(self, action_id: str) -> Any:
         """
         Routes an action request to the appropriate service.
-
-        Args:
-            action_id: The identifier for the action to route.
-
-        Returns:
-            The result of the action.
-
-        Raises:
-            RouterError: If the action is unknown or an error occurs.
         """
+        if action_id == "dashboard":
+            return {
+                "environment": self.services["environment"].run(),
+                "network": self.services["network"].run(),
+                "health": self.services["health"].run(),
+            }
+
         service = self.services.get(action_id)
 
         if not service:

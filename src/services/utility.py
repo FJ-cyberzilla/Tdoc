@@ -21,7 +21,7 @@ class UtilityService(DiagnosticService):
         """
         if not self._is_installed(tool_name):
             self._install_package(tool_name)
-        
+
         # Execute tool
         subprocess.run([tool_name], check=False)
         return True

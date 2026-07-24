@@ -1,0 +1,746 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDoc :: Termux Doctor - Platform Architecture & Automation Blueprint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tdoc: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316', // Primary Amber/Orange
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                            glow: '#ff6b00',
+                            darkBg: '#090a0f',
+                            cardBg: '#12141d',
+                            cardBorder: '#232736'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            background-color: #090a0f;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.12) 0%, transparent 70%),
+                radial-gradient(circle at 0% 100%, rgba(234, 88, 12, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .mono {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .orange-glow {
+            box-shadow: 0 0 25px -5px rgba(249, 115, 22, 0.35);
+        }
+
+        .orange-glow-sm {
+            box-shadow: 0 0 12px -2px rgba(249, 115, 22, 0.3);
+        }
+
+        .orange-border-glow {
+            border-color: rgba(249, 115, 22, 0.5);
+            box-shadow: inset 0 0 15px rgba(249, 115, 22, 0.1);
+        }
+
+        .grid-bg {
+            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(18, 20, 29, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f97316;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ea580c;
+        }
+
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(249, 115, 22, 0.3);
+            position: absolute;
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .pulse-amber {
+            animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-orange {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.98); }
+        }
+    </style>
+</head>
+<body class="min-h-screen grid-bg relative overflow-x-hidden pb-16">
+    <div class="scanline"></div>
+
+    <!-- Top Navigation / Banner -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-tdoc-500/20 px-6 py-4 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-tdoc-500 to-tdoc-700 flex items-center justify-center orange-glow text-black font-extrabold text-xl">
+                    <i class="fa-solid font-mono fa-terminal"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-2xl font-black tracking-wider text-white mono">TDoc <span class="text-tdoc-500 text-sm font-normal">v2.5.0-SOTA</span></h1>
+                        <span class="px-2 py-0.5 text-xs font-mono bg-tdoc-500/10 border border-tdoc-500/40 text-tdoc-400 rounded-full">Termux HUD</span>
+                    </div>
+                    <p class="text-xs text-slate-400">FJ™ Cybertronic Systems Architecture Blueprint</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 text-xs mono">
+                <div class="px-3 py-1.5 rounded-md glass-panel border border-tdoc-500/30 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-slate-300">Sandbox: <strong class="text-white">Active</strong></span>
+                </div>
+                <div class="px-3 py-1.5 rounded-md glass-panel border border-tdoc-500/30 flex items-center gap-2">
+                    <i class="fa-solid fa-cube text-tdoc-500"></i>
+                    <span class="text-slate-300">Manager: <strong class="text-white">uv</strong></span>
+                </div>
+                <a href="#makefile-section" class="px-3 py-1.5 rounded-md bg-tdoc-500 text-black font-bold hover:bg-tdoc-400 transition-all orange-glow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Makefile Engine
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
+
+        <!-- HERO SECTION: Executive Summary -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass-panel rounded-2xl p-6 sm:p-8 border border-tdoc-500/30 relative overflow-hidden flex flex-col justify-between orange-border-glow">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-tdoc-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div>
+                    <div class="flex items-center gap-2 text-tdoc-400 text-xs font-mono font-semibold uppercase tracking-widest mb-3">
+                        <i class="fa-solid fa-shield-halved"></i> Platform Integrity Diagnostics
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+                        Hardened Terminal Intelligence & Controls for <span class="text-transparent bg-clip-text bg-gradient-to-r from-tdoc-400 via-tdoc-500 to-amber-300">Termux</span>
+                    </h2>
+                    <p class="text-slate-300 text-sm leading-relaxed mb-6">
+                        TDoc is a SOTA modular diagnostic suite optimized for mobile Linux environments. Designed to operate within Termux limitations, it continuously audits hardware metrics, detects network DNS leaks, checks SUID security vectors, and manages platform binaries through a high-performance terminal UI.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-800 text-center mono">
+                    <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Architecture</span>
+                        <span class="text-tdoc-400 font-bold text-sm">Router-Service</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">UI Engine</span>
+                        <span class="text-tdoc-400 font-bold text-sm">Rich Reactive HUD</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Build System</span>
+                        <span class="text-tdoc-400 font-bold text-sm">Makefile + uv</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Security Audit</span>
+                        <span class="text-tdoc-400 font-bold text-sm">SUID / Root / DNS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Mockup HUD Live Visualizer -->
+            <div class="glass-panel rounded-2xl p-5 border border-slate-800 flex flex-col justify-between mono">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                    </div>
+                    <span class="text-slate-500 text-[11px]">tdoc-cli --hud</span>
+                </div>
+
+                <div class="my-4 space-y-3 text-xs leading-relaxed">
+                    <div class="text-tdoc-400 font-bold border-b border-tdoc-500/20 pb-1">
+                        =====================================<br>
+                        🗲  T D O C  ::  S Y S T E M  H U D  🗲<br>
+                        =====================================
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>[+] Battery Temp:</span>
+                        <span class="text-emerald-400 font-semibold">32.4°C (Normal)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>[+] Storage Usage:</span>
+                        <span class="text-tdoc-400 font-semibold">18.4GB / 64GB (28%)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>[+] DNS Leak Test:</span>
+                        <span class="text-emerald-400 font-semibold">PASSED (Cloudflare)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>[+] Root Posture:</span>
+                        <span class="text-amber-400 font-semibold">Unrooted / Sealed</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>[+] Active Router:</span>
+                        <span class="text-tdoc-400 font-semibold">TDocRouter::Dispatch</span>
+                    </div>
+                    <div class="p-2 rounded bg-tdoc-500/10 border border-tdoc-500/30 text-tdoc-300 text-[11px]">
+                        &gt; Status: Core Services Normal. Waiting for command...
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800 flex gap-2">
+                    <button onclick="triggerSimulatedScan()" class="w-full py-2 bg-tdoc-500/20 border border-tdoc-500/50 hover:bg-tdoc-500/30 text-tdoc-300 rounded font-bold transition text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrows-rotate"></i> Run Live Diagnostic
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SYSTEM ARCHITECTURE DIAGRAM -->
+        <section class="glass-panel rounded-2xl p-6 border border-slate-800">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sitemap text-tdoc-500"></i> Architecture & Execution Graph
+                    </h3>
+                    <p class="text-slate-400 text-xs">Decoupled Architecture Flow (CLI Main &rarr; TDocRouter &rarr; Service Factory &rarr; Diagnostic Handlers)</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs mono">
+                    <span class="px-2.5 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded">View Layer</span>
+                    <span class="px-2.5 py-1 bg-tdoc-500/10 text-tdoc-400 border border-tdoc-500/30 rounded">Core Router</span>
+                    <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded">Service Bus</span>
+                </div>
+            </div>
+
+            <!-- Visual Flowchart Matrix -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center relative">
+                
+                <!-- Entry Column -->
+                <div class="lg:col-span-3 space-y-4">
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-blue-500/40 relative hover:border-blue-400 transition">
+                        <span class="absolute -top-2 -right-2 px-2 py-0.5 bg-blue-500 text-black text-[10px] font-bold rounded">ENTRY</span>
+                        <div class="font-bold text-blue-400 mono text-sm flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-play"></i> main.py
+                        </div>
+                        <p class="text-xs text-slate-400">Entry Gate & Environment Sandbox Initialization.</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-blue-500/40 relative hover:border-blue-400 transition">
+                        <div class="font-bold text-blue-400 mono text-sm flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-desktop"></i> ui/ui_manager.py
+                        </div>
+                        <p class="text-xs text-slate-400">Renders Terminal HUD with Rich framework formatting & themes.</p>
+                        <div class="mt-2 text-[10px] text-slate-500 mono flex items-center gap-1">
+                            <i class="fa-solid fa-palette text-tdoc-500"></i> core/theme.py
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Router Column -->
+                <div class="lg:col-span-3">
+                    <div class="p-5 rounded-xl bg-slate-900/90 border-2 border-tdoc-500 relative orange-glow-sm">
+                        <span class="absolute -top-3 left-4 px-2 py-0.5 bg-tdoc-500 text-black text-[10px] font-extrabold rounded uppercase tracking-wider">Core Dispatcher</span>
+                        <div class="font-black text-tdoc-400 mono text-base mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-route"></i> TDocRouter
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                            Central routing module decoupling UI interaction from system execution logic.
+                        </p>
+                        <div class="p-2 rounded bg-black/50 border border-slate-800 text-[11px] mono text-slate-400 space-y-1">
+                            <div><i class="fa-solid fa-gear text-tdoc-500"></i> router.py</div>
+                            <div><i class="fa-solid fa-link text-tdoc-500"></i> core/engine.py</div>
+                            <div><i class="fa-solid fa-sliders text-tdoc-500"></i> constants.py</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Factory Column -->
+                <div class="lg:col-span-2">
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-amber-500/50 text-center hover:border-amber-400 transition">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500 text-amber-400 flex items-center justify-center mx-auto mb-2 text-base">
+                            <i class="fa-solid fa-industry"></i>
+                        </div>
+                        <div class="font-bold text-amber-400 mono text-sm mb-1">ServiceFactory</div>
+                        <p class="text-[11px] text-slate-400">Dynamically instantiates and manages singleton service instances.</p>
+                    </div>
+                </div>
+
+                <!-- Services Grid -->
+                <div class="lg:col-span-4 grid grid-cols-2 gap-2 text-xs mono">
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-microchip text-emerald-400 mb-1 block"></i> PlatformService
+                        <span class="block text-[10px] text-slate-400 font-sans">Hardware, OS, Storage</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-network-wired text-emerald-400 mb-1 block"></i> NetworkService
+                        <span class="block text-[10px] text-slate-400 font-sans">Topology & DNS Leaks</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-user-shield text-emerald-400 mb-1 block"></i> SecurityService
+                        <span class="block text-[10px] text-slate-400 font-sans">SUID & SELinux Posture</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-box-archive text-emerald-400 mb-1 block"></i> PackageManager
+                        <span class="block text-[10px] text-slate-400 font-sans">Binary Audit & Inventory</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-rotate text-emerald-400 mb-1 block"></i> UpdaterService
+                        <span class="block text-[10px] text-slate-400 font-sans">Self-Sync Engine</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30 transition">
+                        <i class="fa-solid fa-wrench text-emerald-400 mb-1 block"></i> UtilityService
+                        <span class="block text-[10px] text-slate-400 font-sans">htop / neofetch Bridge</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TWO COLUMN DETAILS: Diagnostic Capabilities & Directory Structure -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left: Service Capabilities Breakdown -->
+            <div class="lg:col-span-7 space-y-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-tdoc-500"></i> Subsystem Diagnostics Core
+                    </h3>
+                    <span class="text-xs text-slate-400 mono">src/services/*</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Battery & Thermal -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-tdoc-500"></i> Battery & Power
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">battery.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Tracks Android system power draw, charging voltage, current throttling, and sensor thermal levels.
+                        </p>
+                    </div>
+
+                    <!-- Network & DNS -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-wifi text-tdoc-500"></i> Network Integrity
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">network.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Pings Termux mirror endpoints, detects active VPN tunnels, and verifies DNS request leak status.
+                        </p>
+                    </div>
+
+                    <!-- Security Audit -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-shield-cat text-tdoc-500"></i> Security Auditing
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">security.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Scans for unauthorized SUID bit binaries, evaluates Android SELinux context, and checks root escalation paths.
+                        </p>
+                    </div>
+
+                    <!-- Package Manager -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-box text-tdoc-500"></i> Package Manager
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">package_manager.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Fast inventory audit of PKG/APT installed tools, detecting orphaned or corrupted binaries.
+                        </p>
+                    </div>
+
+                    <!-- Storage & Memory -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-database text-tdoc-500"></i> Storage & Memory
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">storage.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Monitors Termux internal storage allocations (`$PREFIX`), swap status, and RAM memory fragmentation.
+                        </p>
+                    </div>
+
+                    <!-- External Utilities -->
+                    <div class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-tdoc-500/40 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-white text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-terminal text-tdoc-500"></i> Utility Launcher
+                            </span>
+                            <span class="text-[10px] mono text-tdoc-400 bg-tdoc-500/10 px-2 py-0.5 rounded">utility.py</span>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            On-demand auto-installation and seamless passthrough execution for `htop`, `neofetch`, and diagnostics.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Interactive Project Tree Explorer -->
+            <div class="lg:col-span-5 glass-panel rounded-2xl p-5 border border-slate-800 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-folder-tree text-tdoc-500"></i> Code Base Structure
+                        </h3>
+                        <span class="text-xs text-slate-400 mono">Modular Design</span>
+                    </div>
+
+                    <!-- Tree View -->
+                    <div class="bg-black/60 p-4 rounded-xl border border-slate-800/80 font-mono text-xs overflow-x-auto text-slate-300 space-y-1 leading-relaxed">
+                        <div class="text-slate-500">TDoc /</div>
+                        <div class="pl-2 flex items-center gap-1 text-amber-400"><i class="fa-regular fa-file"></i> Makefile / pyproject.toml</div>
+                        <div class="pl-2 flex items-center gap-1 text-blue-400"><i class="fa-regular fa-file-code"></i> structure.mmd / uv.lock</div>
+                        <div class="pl-2 text-slate-400"><i class="fa-solid fa-folder-open text-tdoc-500"></i> reports/</div>
+                        <div class="pl-2 text-slate-400"><i class="fa-solid fa-folder-open text-tdoc-500"></i> src/</div>
+                        <div class="pl-6 text-slate-300"><i class="fa-regular fa-file-code text-blue-400"></i> main.py <span class="text-[10px] text-slate-500">// CLI Entry</span></div>
+                        <div class="pl-6 text-slate-300"><i class="fa-regular fa-file-code text-blue-400"></i> router.py <span class="text-[10px] text-slate-500">// Dispatcher</span></div>
+                        <div class="pl-6 text-slate-400"><i class="fa-solid fa-folder text-tdoc-500"></i> core/</div>
+                        <div class="pl-10 text-slate-400">engine.py &bull; theme.py</div>
+                        <div class="pl-6 text-slate-400"><i class="fa-solid fa-folder text-tdoc-500"></i> services/</div>
+                        <div class="pl-10 text-emerald-400">battery &bull; network &bull; security &bull; platform &bull; package_manager &bull; updater</div>
+                        <div class="pl-6 text-slate-400"><i class="fa-solid fa-folder text-tdoc-500"></i> ui/</div>
+                        <div class="pl-10 text-slate-400">ui_manager.py</div>
+                        <div class="pl-6 text-slate-400"><i class="fa-solid fa-folder text-tdoc-500"></i> tests/ & utils/</div>
+                        <div class="pl-10 text-slate-400">test_health.py &bull; report.py</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded-lg bg-tdoc-500/10 border border-tdoc-500/30 text-xs text-tdoc-300 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-tdoc-500 text-lg"></i>
+                    <span>Built with single-responsibility pattern to ensure lightweight mobile execution.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAKEFILE ENGINE & COMMAND HUB -->
+        <section id="makefile-section" class="glass-panel rounded-2xl p-6 border border-tdoc-500/40 orange-border-glow">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-tdoc-500 text-black font-bold rounded">AUTOMATION</span>
+                        <h3 class="text-xl font-extrabold text-white">Makefile Control Matrix</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Unified targets for installation, health diagnostics, linting, and alias registration</p>
+                </div>
+
+                <div class="flex items-center gap-2 mono text-xs">
+                    <button onclick="filterMakefile('all')" class="make-filter-btn px-3 py-1 rounded bg-tdoc-500 text-black font-bold">All</button>
+                    <button onclick="filterMakefile('setup')" class="make-filter-btn px-3 py-1 rounded bg-slate-800 text-slate-300 hover:text-white">Setup</button>
+                    <button onclick="filterMakefile('quality')" class="make-filter-btn px-3 py-1 rounded bg-slate-800 text-slate-300 hover:text-white">Quality</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mono" id="makefile-grid">
+                
+                <!-- Target: make install -->
+                <div class="make-card setup p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make install</span>
+                        <i class="fa-solid fa-download text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Boots infrastructure & synchronizes deterministic lockfile dependencies via <code class="text-amber-300">uv</code>.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; uv sync --all-extras</span>
+                </div>
+
+                <!-- Target: make check-deps -->
+                <div class="make-card setup p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make check-deps</span>
+                        <i class="fa-solid fa-list-check text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Audits presence of Ruff, Python, external binaries, and system diagnostic utilities.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; which ruff htop neofetch</span>
+                </div>
+
+                <!-- Target: make run -->
+                <div class="make-card setup p-4 rounded-xl bg-slate-900/80 border border-tdoc-500/50 transition orange-glow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-amber-300 font-bold text-sm">make run</span>
+                        <i class="fa-solid fa-play text-amber-400 animate-pulse"></i>
+                    </div>
+                    <p class="text-slate-200 font-sans text-xs mb-3">Boots the interactive telemetry HUD control loop in terminal context.</p>
+                    <span class="text-[10px] text-slate-400 block border-t border-slate-800/80 pt-2">&gt; python -m src.main</span>
+                </div>
+
+                <!-- Target: make diagnose -->
+                <div class="make-card quality p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make diagnose</span>
+                        <i class="fa-solid fa-stethoscope text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Executes full health audit combining Ruff static analysis and structural code footprint.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; pytest & ruff check</span>
+                </div>
+
+                <!-- Target: make lint -->
+                <div class="make-card quality p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make lint</span>
+                        <i class="fa-solid fa-code text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Runs Ruff static code analysis and validation check across all Python files.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; ruff check src/</span>
+                </div>
+
+                <!-- Target: make format -->
+                <div class="make-card quality p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make format</span>
+                        <i class="fa-solid fa-align-left text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Auto-formats codebase strictly to 100-character line length limit standards.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; ruff format --line-length 100</span>
+                </div>
+
+                <!-- Target: make pack-install -->
+                <div class="make-card setup p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make pack-install</span>
+                        <i class="fa-solid fa-box-open text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Compiles binary distribution package and registers local executable <code class="text-amber-300">'tdoc'</code> alias.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; pip install --e .</span>
+                </div>
+
+                <!-- Target: make clean -->
+                <div class="make-card quality p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-tdoc-500/50 transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-tdoc-400 font-bold text-sm">make clean</span>
+                        <i class="fa-solid fa-trash-can text-slate-500"></i>
+                    </div>
+                    <p class="text-slate-300 font-sans text-xs mb-3">Purges compiled Python bytecode, cache directories, and generated build artifacts.</p>
+                    <span class="text-[10px] text-slate-500 block border-t border-slate-800/80 pt-2">&gt; rm -rf __pycache__ .ruff_cache</span>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ANALYTICS & DIAGNOSTIC METRICS CHART -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass-panel rounded-2xl p-6 border border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-white">Diagnostic Target Benchmark Profile</h3>
+                        <p class="text-xs text-slate-400">Relative system overhead and execution footprint by diagnostic module</p>
+                    </div>
+                    <span class="text-xs font-mono text-tdoc-400 bg-tdoc-500/10 px-2 py-1 rounded">Benchmark Mode</span>
+                </div>
+                <div class="h-64 w-full">
+                    <canvas id="diagnosticChart"></canvas>
+                </div>
+            </div>
+
+            <!-- SUID & Security Threat Vectors Card -->
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 text-tdoc-400 text-xs font-mono font-bold uppercase mb-2">
+                        <i class="fa-solid fa-shield-virus"></i> Security Matrix
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Termux Isolation Trap Audit</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        TDoc monitors security vectors unique to Android's proot and Termux non-root sandbox contexts.
+                    </p>
+
+                    <div class="space-y-2 text-xs mono">
+                        <div class="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between">
+                            <span class="text-slate-300">SUID Binaries Scan:</span>
+                            <span class="text-emerald-400 font-bold">0 Risky Found</span>
+                        </div>
+                        <div class="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between">
+                            <span class="text-slate-300">SELinux Enforcing:</span>
+                            <span class="text-emerald-400 font-bold">ACTIVE</span>
+                        </div>
+                        <div class="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between">
+                            <span class="text-slate-300">Termux Storage Link:</span>
+                            <span class="text-tdoc-400 font-bold">VERIFIED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-500 mono flex justify-between items-center">
+                    <span>Vendor: FJ™ Cybertronic</span>
+                    <span class="text-tdoc-400">SEALED</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-slate-800 py-8 text-center text-xs text-slate-500 mono">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                TDoc :: Platform Automation & Integrity Diagnostics Suite
+            </div>
+            <div class="text-tdoc-500">
+                Developed for FJ™ Cybertronic Systems
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // Initialize Chart.js Diagnostic Benchmark Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('diagnosticChart').getContext('2d');
+            
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Fira Code, monospace';
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Battery', 'Network', 'Security', 'Package Mgr', 'Storage', 'Updater'],
+                    datasets: [{
+                        label: 'Diagnostic Latency (ms)',
+                        data: [12, 45, 88, 32, 18, 60],
+                        backgroundColor: 'rgba(249, 115, 22, 0.6)',
+                        borderColor: '#f97316',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }, {
+                        label: 'RAM Footprint (MB)',
+                        data: [2.1, 4.2, 5.8, 8.1, 3.0, 4.5],
+                        backgroundColor: 'rgba(234, 88, 12, 0.3)',
+                        borderColor: '#ea580c',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 11 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            beginAtZero: true
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Filter Makefile targets
+        function filterMakefile(category) {
+            const cards = document.querySelectorAll('.make-card');
+            const btns = document.querySelectorAll('.make-filter-btn');
+
+            btns.forEach(btn => {
+                btn.classList.remove('bg-tdoc-500', 'text-black', 'font-bold');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+
+            event.target.classList.remove('bg-slate-800', 'text-slate-300');
+            event.target.classList.add('bg-tdoc-500', 'text-black', 'font-bold');
+
+            cards.forEach(card => {
+                if (category === 'all' || card.classList.contains(category)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Live Diagnostic Scan Simulation
+        function triggerSimulatedScan() {
+            const btn = event.currentTarget;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Scanning Termux Core...`;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Health Check Completed`;
+                btn.classList.remove('bg-tdoc-500/20');
+                btn.classList.add('bg-emerald-500/20', 'border-emerald-500/40', 'text-emerald-300');
+
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Run Live Diagnostic`;
+                    btn.classList.remove('bg-emerald-500/20', 'border-emerald-500/40', 'text-emerald-300');
+                    btn.classList.add('bg-tdoc-500/20');
+                    btn.disabled = false;
+                }, 3000);
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
+
+```

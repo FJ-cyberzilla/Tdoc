@@ -2,6 +2,7 @@
 TDoc Hardware Subsystem - System Storage Benchmarks & Clean API Battery Telemetry
 """
 
+import shutil
 from src.interfaces import DiagnosticService
 from src.services.storage import StorageMonitor
 from src.services.battery import BatteryMonitor
@@ -17,6 +18,9 @@ class HealthService(DiagnosticService):
     def run(self) -> dict:
         """Evaluates storage and battery metrics."""
         results = self._storage.run()
+        # Add used storage
+        total, _, free = shutil.disk_usage(".")
+        results["used_storage_gb"] = (total - free) / (1024**3)
         results["battery"] = self._battery.run()
 
         return results

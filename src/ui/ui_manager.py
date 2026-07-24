@@ -7,6 +7,9 @@ from typing import Any
 from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
+from rich.layout import Layout
+from rich.columns import Columns
+from rich.progress import Progress, BarColumn, TextColumn
 from src.constants import __version__
 from src.router import TDocRouter
 from src.core.theme import ThemeManager
@@ -40,9 +43,9 @@ class UIRenderer:
     def render_navigation(self):
         """Renders the TDoc main menu navigation."""
         nav_text = Text()
-        nav_text.append("[1] Platform Metrics (Hardware, Storage, Env)\n", style="text.primary")
+        nav_text.append("[1] Metrics .. (Hardware, Storage, Env)\n", style="text.primary")
         nav_text.append(
-            "[2] Network Topology (DNS Leaks, Latency, Hotspot)\n", style="text.primary"
+            "[2] Network ... (DNS Leaks, Latency, Hotspot)\n", style="text.primary"
         )
         nav_text.append("[3] Security Audit (SUID, Root, SELinux)\n", style="text.primary")
         nav_text.append("[4] Workspace Status (Git Status, Sync)\n", style="text.primary")
@@ -62,7 +65,7 @@ class UIRenderer:
     def render_package_manager(self, data: dict):
         """Renders the package manager output using an aesthetic table."""
         pkgs = data.get("packages", [])
-        
+
         table = Table(title="Installed Packages", border_style="border.main")
         table.add_column("Index", style="text.muted", justify="right")
         table.add_column("Package Name", style="white")
@@ -78,40 +81,64 @@ class UIRenderer:
         if len(pkgs) > 20:
             self.console.print(f"[text.muted]... and {len(pkgs) - 20} more[/text.muted]")
 
-    def render_platform_metrics(self, env_data: dict, health_data: dict):
-        """Renders platform metrics using a clean, modern panel/table layout."""
-        # Environment Panel
-        env_table = Text()
-        for k, v in env_data.items():
-            env_table.append(f"{k.replace('_', ' ').title()}: ", style="text.primary")
-            env_table.append(f"{v}\n", style="white")
-
-        # Health Panel
-        health_table = Text()
-        batt = health_data.get("battery", {})
-        health_table.append("Free Storage: ", style="text.primary")
-        health_table.append(f"{health_data.get('free_storage_gb', 0):.1f} GB\n", style="white")
-        health_table.append("Write Speed: ", style="text.primary")
-        health_table.append(f"{health_data.get('write_speed_mb_s', 0):.1f} MB/s\n", style="white")
-        health_table.append("Battery: ", style="text.primary")
-        health_table.append(
-            f"{batt.get('capacity')} ({batt.get('status')}) - {batt.get('temp')}\n", style="white"
+    def render_dashboard(self, env_data: dict, net_data: dict, health_data: dict):
+        """Renders the high-density dashboard grid."""
+        layout = Layout()
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="body"),
+        )
+        layout["body"].split_row(
+            Layout(name="left"),
+            Layout(name="right"),
         )
 
-        self.console.print(
-            Panel(
-                env_table,
-                title="[text.primary]Environment Metrics[/]",
-                border_style="border.main",
-            )
+        # Build Panels
+        # 1. Environment & Hardware Panel
+        env_panel = Panel(
+            self._build_env_text(env_data),
+            title="[text.primary]System Hardware[/]",
+            border_style="border.dashboard",
         )
-        self.console.print(
-            Panel(
-                health_table,
-                title="[text.primary]Hardware Health[/]",
-                border_style="border.main",
-            )
+        # 2. Network Panel
+        net_panel = Panel(
+            self._build_net_text(net_data),
+            title="[text.primary]Network Deep-Dive[/]",
+            border_style="border.dashboard",
         )
+        # 3. Health/Storage Panel
+        health_panel = Panel(
+            self._build_health_text(health_data),
+            title="[text.primary]Storage & Battery[/]",
+            border_style="border.dashboard",
+        )
+
+        layout["header"].update(Panel("TDoc Dashboard - Cybertronic Systems", style="header.main"))
+        layout["left"].split_column(env_panel, health_panel)
+        layout["right"].update(net_panel)
+
+        self.console.print(layout)
+
+    def _build_env_text(self, env_data: dict) -> Text:
+        t = Text()
+        t.append(f"CPU: {env_data['cpu']['model']} ({env_data['cpu']['cores']} cores)\n", style="white")
+        t.append(f"RAM: {env_data['ram']['used']:.1f} GB / {env_data['ram']['total']:.1f} GB\n", style="white")
+        t.append(f"Uptime: {env_data['uptime']}\n", style="white")
+        return t
+
+    def _build_net_text(self, net_data: dict) -> Text:
+        t = Text()
+        t.append(f"Local IP: {net_data['local_ip']}\n", style="white")
+        t.append(f"DNS: {', '.join(net_data['dns'])}\n", style="white")
+        t.append(f"VPN: {'Active' if net_data['vpn']['active'] else 'Inactive'}\n", style="white")
+        t.append(f"ISP: {net_data['vpn']['isp']}\n", style="white")
+        return t
+
+    def _build_health_text(self, health_data: dict) -> Text:
+        t = Text()
+        t.append(f"Storage Used: {health_data.get('used_storage_gb', 0):.1f} GB\n", style="white")
+        t.append(f"Battery: {health_data.get('battery', {}).get('capacity')}\n", style="white")
+        return t
 
     def render_network_metrics(self, data: dict):
         """Renders network diagnostics."""
@@ -128,7 +155,7 @@ class UIRenderer:
         self.console.print(
             Panel(
                 net_text,
-                title="[text.primary]Network Topology[/]",
+                title="[text.primary]Network ...[/]",
                 border_style="border.main",
             )
         )
@@ -188,7 +215,7 @@ class HUDLoop:
                 break
 
             action_map = {
-                "1": "platform",
+                "1": "dashboard",
                 "2": "network",
                 "3": "security",
                 "4": "updater",
@@ -204,9 +231,9 @@ class HUDLoop:
                 else:
                     try:
                         result = self.router.route_action(action)
-                        if action == "platform":
-                            self.renderer.render_platform_metrics(
-                                result["environment"], result["health"]
+                        if action == "dashboard":
+                            self.renderer.render_dashboard(
+                                result["environment"], result["network"], result["health"]
                             )
                         elif action == "network":
                             self.renderer.render_network_metrics(result)

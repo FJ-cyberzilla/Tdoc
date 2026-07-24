@@ -25,10 +25,8 @@ class PackageManagerService(DiagnosticService):
             cmd = ["dpkg-query", "-l"]
             # Pipeline: dpkg-query -l | awk '{print $2}' | tail -n +6
             # tail -n +6 skips the header lines in dpkg output
-            res = subprocess.run(
-                cmd, capture_output=True, text=True, check=True, timeout=5
-            )
-            
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=5)
+
             pkgs = []
             lines = res.stdout.splitlines()
             # Skip the first 5 lines (header)
