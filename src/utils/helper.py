@@ -5,7 +5,7 @@ TDoc Core System Helpers and Hardware Boundary Interfaces
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any
 
 from rich.console import Console
 from rich.status import Status
@@ -18,7 +18,7 @@ custom_theme = Theme(RICH_THEME_CONFIG)
 console = Console(theme=custom_theme)
 
 
-def run_pure_command(cmd: List[str], timeout: float = 3.0) -> Tuple[Optional[str], Optional[str]]:
+def run_pure_command(cmd: list[str], timeout: float = 3.0) -> tuple[str | None, str | None]:
     """Executes system binaries safely with strict isolation."""
     try:
         proc = subprocess.run(
@@ -43,7 +43,7 @@ def track_activity(message: str):
     )
 
 
-def diagnose_git_overhead() -> Dict[str, Any]:
+def diagnose_git_overhead() -> dict[str, Any]:
     """
     Specifically analyzes the Termux home path for git misconfigurations
     that cause terminal lags and telemetry data bloat.

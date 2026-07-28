@@ -2,8 +2,9 @@
 TDoc Utility Service - External tool management.
 """
 
-import subprocess
 import shutil
+import subprocess
+
 from src.interfaces import DiagnosticService
 
 

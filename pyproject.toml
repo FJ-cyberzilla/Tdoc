@@ -18,11 +18,20 @@ dependencies = [
 ]
 
 [project.scripts]
-tdoc = "main:run_system_main"
+tdoc = "src.main:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["*"]
+where = ["."]
+include = ["src*"]
 
 [tool.black]
 target-version = ['py314']
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["BLE001", "S110", "RUF012"]
+
+[tool.uv]
+link-mode = "copy"

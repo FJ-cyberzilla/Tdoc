@@ -3,10 +3,11 @@ TDoc Platform Diagnostics - Main System Entry Gate
 """
 
 import sys
-from src.ui import ui_manager
+
 from src.exceptions import TDocError, UIError
 from src.router import TDocRouter
 from src.services.factory import ServiceFactory
+from src.ui import ui_manager
 
 
 def main():

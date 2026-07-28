@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+
 from src.interfaces import DiagnosticService
 
 
@@ -20,25 +21,35 @@ class BatteryMonitor(DiagnosticService):
         """Queries official Termux API layers or falls back to sysfs."""
         metrics: dict[str, str] = {"capacity": "UNKNOWN", "temp": "UNKNOWN", "status": "UNKNOWN"}
 
-        # Mode 1: Intercept official unrooted Termux API system layer
-        if shutil.which("termux-battery-status"):
-            try:
-                res = subprocess.run(
-                    ["termux-battery-status"], capture_output=True, text=True, check=False
-                )
-                if res.returncode == 0:
-                    data = json.loads(res.stdout)
-                    metrics["capacity"] = f"{data.get('percentage', 'UNKNOWN')}%"
-                    metrics["status"] = str(data.get("status", "UNKNOWN")).upper()
+        # Attempt Termux API
+        termux_data = self._get_termux_battery_data()
+        if termux_data:
+            return termux_data
 
-                    raw_temp = data.get("temperature", None)
-                    if raw_temp is not None:
-                        metrics["temp"] = f"{float(raw_temp):.1f}°C"
-                    return metrics
-            except Exception:
-                pass
+        # Absolute Fallback to raw legacy kernel paths
+        return self._get_sysfs_battery_data(metrics)
 
-        # Mode 2: Absolute Fallback to raw legacy kernel paths if accessible
+    def _get_termux_battery_data(self) -> dict[str, str] | None:
+        if not shutil.which("termux-battery-status"):
+            return None
+        try:
+            res = subprocess.run(
+                ["termux-battery-status"], capture_output=True, text=True, check=False
+            )
+            if res.returncode == 0:
+                data = json.loads(res.stdout)
+                return {
+                    "capacity": f"{data.get('percentage', 'UNKNOWN')}%",
+                    "status": str(data.get("status", "UNKNOWN")).upper(),
+                    "temp": f"{float(data.get('temperature', 0)):.1f}°C"
+                    if data.get("temperature") is not None
+                    else "UNKNOWN",
+                }
+        except Exception:
+            pass
+        return None
+
+    def _get_sysfs_battery_data(self, metrics: dict[str, str]) -> dict[str, str]:
         base_path = "/sys/class/power_supply/battery"
         if os.path.exists(base_path):
             try:
@@ -50,5 +61,4 @@ class BatteryMonitor(DiagnosticService):
                     metrics["temp"] = f"{float(f.read().strip()) / 10:.1f}°C"
             except (FileNotFoundError, PermissionError, ValueError, UnicodeDecodeError):
                 pass
-
         return metrics

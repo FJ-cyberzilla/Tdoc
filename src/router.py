@@ -2,7 +2,8 @@
 TDoc Router - Centralized Orchestration Layer.
 """
 
-from typing import Any, Dict
+from typing import Any
+
 from src.exceptions import RouterError
 from src.interfaces import DiagnosticService
 
@@ -10,7 +11,7 @@ from src.interfaces import DiagnosticService
 class TDocRouter:
     """Orchestrates requests between the UI and system modules."""
 
-    def __init__(self, services: Dict[str, DiagnosticService]):
+    def __init__(self, services: dict[str, DiagnosticService]):
         """
         Initializes the router with necessary services.
 
@@ -25,7 +26,7 @@ class TDocRouter:
         """
         if action_id == "dashboard":
             return {
-                "environment": self.services["environment"].run(),
+                "platform": self.services["platform"].run(),
                 "network": self.services["network"].run(),
                 "health": self.services["health"].run(),
             }
@@ -40,7 +41,7 @@ class TDocRouter:
         except Exception as e:
             raise RouterError(f"Error executing action '{action_id}': {e}") from e
 
-    def get_basic_info(self) -> Dict[str, Any]:
+    def get_basic_info(self) -> dict[str, Any]:
         """Provides basic system information for the HUD."""
         # For now, return placeholder data.
         return {

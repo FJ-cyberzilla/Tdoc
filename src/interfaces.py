@@ -2,7 +2,7 @@
 Diagnostic service interface definitions.
 """
 
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 
 class DiagnosticService(Protocol):

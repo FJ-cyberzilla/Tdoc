@@ -6,17 +6,18 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Any
 
 from rich.console import Console
 from rich.theme import Theme
+
 from src.constants import RICH_THEME_CONFIG
 
 logger = logging.getLogger(__name__)
 console = Console(theme=Theme(RICH_THEME_CONFIG))
 
 
-def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
+def _build_html_template(data: dict[str, Any], timestamp: str) -> str:
     """Compiles a responsive, modern dark/orange terminal operational dashboard."""
     raw_json = json.dumps(data, indent=2)
 
@@ -90,7 +91,7 @@ def _build_html_template(data: Dict[str, Any], timestamp: str) -> str:
     return html_content
 
 
-def compile_and_save_telemetry(snapshot_data: Dict[str, Any]) -> Tuple[Path, Path]:
+def compile_and_save_telemetry(snapshot_data: dict[str, Any]) -> tuple[Path, Path]:
     """Pipes memory state metrics to structured file volumes inside the workspace."""
     # ✅ FIX: use Path.home() instead of missing HOME constant
     reports_dir = Path.home() / "TDoc" / "reports"

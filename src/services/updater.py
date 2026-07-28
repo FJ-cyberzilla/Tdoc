@@ -3,8 +3,9 @@ TDoc Updater Subsystem - Workspace Integrity and Repository Synchronization
 """
 
 import subprocess
-import time
 import sys
+import time
+
 from src.constants import ANSI_ORANGE, RESET
 from src.interfaces import DiagnosticService
 

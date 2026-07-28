@@ -3,6 +3,7 @@ TDoc Package Manager - Installed Package Inventory
 """
 
 import subprocess
+
 from src.interfaces import DiagnosticService
 
 

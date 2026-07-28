@@ -4,6 +4,7 @@ TDoc Environment Subsystem - System Profiler & Termux Ecosystem Analysis
 
 import os
 import platform
+import re
 import shutil
 import subprocess
 
@@ -24,19 +25,55 @@ class EnvironmentService:
             return ""
 
     def _get_cpu_info(self) -> dict:
-        """Parses /proc/cpuinfo for architecture and core count."""
+        """Parses /proc/cpuinfo or falls back to nproc/platform for architecture."""
         cpu_info = {"arch": platform.machine(), "cores": 0, "model": "Unknown"}
         try:
             with open("/proc/cpuinfo", "r") as f:
-                lines = f.readlines()
-                for line in lines:
-                    if "processor" in line.lower():
-                        cpu_info["cores"] += 1
-                    if "model name" in line.lower() or "hardware" in line.lower():
-                        cpu_info["model"] = line.split(":")[1].strip()
+                content = f.read()
+                model_match = re.search(r"Hardware\s*:\s*(.+)", content)
+                cpu_info["model"] = model_match.group(1).strip() if model_match else "Android"
+
+                cpu_info["cores"] = len(re.findall(r"processor\s*:", content))
         except Exception:
-            cpu_info["cores"] = os.cpu_count() or 0
+            pass
+
+        if cpu_info["cores"] == 0:
+            try:
+                cpu_info["cores"] = int(subprocess.check_output(["nproc"], text=True).strip())
+            except Exception:
+                cpu_info["cores"] = os.cpu_count() or 8
+
         return cpu_info
+
+    def _get_uptime(self) -> str:
+        """Parses /proc/uptime for system uptime."""
+        try:
+            # Try `uptime` command first if available
+            output = subprocess.check_output(["uptime"], text=True)
+            match = re.search(r"up\s+(.*?)(?:,|\s+user)", output)
+            if match:
+                return match.group(1).strip()
+        except Exception:
+            pass
+
+        try:
+            # Fallback to /proc/uptime
+            with open("/proc/uptime", "r") as f:
+                seconds = float(f.read().split()[0])
+                days = int(seconds // 86400)
+                hours = int((seconds % 86400) // 3600)
+                minutes = int((seconds % 3600) // 60)
+
+                parts = []
+                if days > 0:
+                    parts.append(f"{days}d")
+                if hours > 0:
+                    parts.append(f"{hours}h")
+                if minutes > 0:
+                    parts.append(f"{minutes}m")
+                return " ".join(parts) if parts else "Just started"
+        except Exception:
+            return "UNKNOWN"
 
     def _get_ram_info(self) -> dict:
         """Parses /proc/meminfo for RAM metrics in GB."""
@@ -62,17 +99,6 @@ class EnvironmentService:
         except Exception:
             pass
         return ram
-
-    def _get_uptime(self) -> str:
-        """Parses /proc/uptime for system uptime."""
-        try:
-            with open("/proc/uptime", "r") as f:
-                uptime_seconds = float(f.readline().split()[0])
-                hours = int(uptime_seconds // 3600)
-                minutes = int((uptime_seconds % 3600) // 60)
-                return f"{hours}h {minutes}m"
-        except Exception:
-            return "UNKNOWN"
 
     def _run_environment_checks(self) -> dict:
         is_android = bool(shutil.which("getprop"))

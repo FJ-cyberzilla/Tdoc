@@ -2,9 +2,10 @@
 Storage Diagnostic Service
 """
 
+import os
 import shutil
 import time
-import os
+
 from src.interfaces import DiagnosticService
 
 

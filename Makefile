@@ -2,108 +2,103 @@
 # TDoc Command Center - Master Automation & Orchestration
 # ====================================================================================
 
-PYTHON   = python3
-PIP      = pip
+PYTHON := uv run python
+UV     := uv
 
 # Suppress sub-make directory messages
 MAKEFLAGS += --no-print-directory
 
-# ANSI Color Palette (Vintage Green/Orange Theme) – using \033
-ORANGE    = \033[38;5;208m
-LIGHT_ORANGE = \033[38;5;214m
-DARK_AMBER   = \033[38;5;166m
-VINTAGE_GREEN = \033[38;5;70m
-BOLD      = \033[1m
-UNDERLINE = \033[4m
-STATUS_GREEN = \033[0;32m
-STATUS_RED   = \033[0;31m
-INFO_CYAN    = \033[0;36m
-PINK        = \033[38;5;213m
-NC         = \033[0m
+# Sleek 256-Color Palette (Cyberpunk / Modern CLI Aesthetic)
+CYAN    := \033[38;5;51m
+MAGENTA := \033[38;5;198m
+GREEN   := \033[38;5;46m
+RED     := \033[38;5;196m
+MUTED   := \033[38;5;242m
+WHITE   := \033[38;5;255m
+BOLD    := \033[1m
+NC      := \033[0m
 
-.PHONY: default help install format lint diagnose check-deps run clean brand pack-install
+.PHONY: default help install format lint diagnose check-deps run clean pack-install test brand
 
 default: help
 
 help:
-	@printf "\n$(ORANGE)====================================================================$(NC)\n"
-	@printf "$(LIGHT_ORANGE) 🗲  T D O C  ::  P L A T F O R M  A U T O M a T I O N   🗲 $(NC)\n"
-	@printf "$(ORANGE)====================================================================$(NC)\n"
-	@printf "$(DARK_AMBER)$(BOLD)Functional Blueprint:$(NC)\n"
-	@printf "  TDoc runs light diagnostic  across Termux, exposing hardware\n"
-	@printf "  throttling, tracking network DNS leaks,isolation security traps.\n\n"
-	@printf "$(DARK_AMBER)$(BOLD)Operational Core Targets:$(NC)\n"
-	@printf "  $(LIGHT_ORANGE)make install$(NC)    - Sets up systems.\n"
-	@printf "  $(LIGHT_ORANGE)make check-deps$(NC) - Audits presence of Ruff and  utilities.\n"
-	@printf "  $(LIGHT_ORANGE)make run$(NC)        - Boots the interactive telemetry HUD control loop.\n"
-	@printf "  $(LIGHT_ORANGE)make format$(NC)     - Auto-formats Python code  100‑character line limit.\n"
-	@printf "  $(LIGHT_ORANGE)make lint$(NC)       - Runs Ruff static analysis (lint + format check).\n"
-	@printf "  $(LIGHT_ORANGE)make diagnose$(NC)   - Full health audit: linting and structural checks.\n"
-	@printf "  $(LIGHT_ORANGE)make clean$(NC)      - Flushes bytecode, cache, and build artifacts.\n"
-	@printf "  $(LIGHT_ORANGE)make pack-install$(NC)- Compiles and registers 'tdoc' execution alias.\n"
-# The 'brand' target is intentionally hidden – not shown in help.
-	@printf "$(ORANGE)====================================================================$(NC)\n\n"
-	@$(MAKE) brand   # Show signature at the end of help
+	@printf "\n"
+	@printf "$(CYAN) █$(NC) $(BOLD)$(WHITE)⚡ T D O C$(NC)\n"
+	@printf "$(CYAN) █$(NC) $(MAGENTA)Platform Automation Engine$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(BOLD)❖ ARCHITECTURE$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(MUTED)  Lightweight Termux diagnostics, hardware telemetry,$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(MUTED)  and security isolation routing.$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(BOLD)❖ COMMAND MATRIX$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "install"      "Setup system & dependencies via uv"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "check-deps"   "Audit presence of uv and utilities"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "run"          "Boot the interactive telemetry HUD"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "test"         "Execute test suite via pytest"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "format"       "Auto-format Python code via ruff"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "lint"         "Run Ruff static code analysis"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "diagnose"     "linting & structural checks"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "clean"        "Flush bytecode, cache, and venv"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "pack-install" "Register global 'tdoc' execution alias"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) ╰─$(NC) $(WHITE)FJ™ Cybertronic Systems$(NC) $(MUTED)· MMXXIV · V3.0.2$(NC)\n\n"
 
 install:
-	@printf "$(ORANGE)🗲 Initializing TDoc Core Infrastructure with Ruff...$(NC)\n"
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Initializing Core Infrastructure...$(NC)\n"
 	pkg install -y termux-api
-	$(PIP) install --upgrade pip build
-	$(PIP) install -r requirements.txt ruff
-	$(PIP) install --editable .
-	@printf "$(STATUS_GREEN)✅ Dependencies installed, Ruff is ready.$(NC)\n"
-	@$(MAKE) brand
+	$(UV) sync
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Dependencies synchronized$(NC)\n\n"
 
 check-deps:
-	@printf "$(INFO_CYAN)🔍 Checking system dependencies...$(NC)\n"
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Auditing System Dependencies...$(NC)\n"
 	@if command -v termux-battery-status >/dev/null 2>&1; then \
-		printf "$(STATUS_GREEN)[+] termux-api: OK$(NC)\n"; \
+		printf "   $(GREEN)✔$(NC) $(MUTED)termux-api$(NC)\n"; \
 	else \
-		printf "$(STATUS_RED)[-] termux-api missing (install: pkg install termux-api)$(NC)\n"; \
+		printf "   $(RED)✘$(NC) $(MUTED)termux-api (Run: pkg install termux-api)$(NC)\n"; \
 	fi
-	@if command -v ruff >/dev/null 2>&1; then \
-		printf "$(STATUS_GREEN)[+] Ruff: OK$(NC)\n"; \
+	@if command -v uv >/dev/null 2>&1; then \
+		printf "   $(GREEN)✔$(NC) $(MUTED)uv$(NC)\n\n"; \
 	else \
-		printf "$(STATUS_RED)[-] Ruff missing (install: pip install ruff)$(NC)\n"; \
+		printf "   $(RED)✘$(NC) $(MUTED)uv (Run: curl -LsSf https://astral.sh/uv/install.sh | sh)$(NC)\n\n"; \
 	fi
 
 lint:
-	@printf "$(ORANGE)🗲 Running Ruff linter...$(NC)\n"
-	ruff check .
-	@printf "$(STATUS_GREEN)✅ Lint passed.$(NC)\n"
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Executing Static Analysis...$(NC)\n"
+	$(UV) run ruff check .
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Linting passed cleanly$(NC)\n\n"
 
 format:
-	@printf "$(ORANGE)🗲 Formatting code with Ruff (100‑character line limit)...$(NC)\n"
-	ruff format --line-length 100 .
-	@printf "$(STATUS_GREEN)✅ Codebase formatted.$(NC)\n"
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Formatting Codebase (100-char max)...$(NC)\n"
+	$(UV) run ruff format --line-length 100 .
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Codebase aligned$(NC)\n\n"
+
+test:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Launching Test Suite...$(NC)\n"
+	$(UV) run pytest
+	@printf "$(GREEN) ✔$(NC) $(MUTED)All assertions satisfied$(NC)\n\n"
 
 diagnose: lint
-	@printf "$(INFO_CYAN)[Gate 2/2] Verifying operational directory footprint...$(NC)\n"
+	@printf "$(CYAN) ◈$(NC) $(WHITE)Validating Operational Footprint...$(NC)\n"
 	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
-		printf "$(STATUS_GREEN)✓ Core components alignment verified.$(NC)\n" || \
-		(printf "$(STATUS_RED)✗ Structural Anomaly: Missing configuration variables.$(NC)\n" && exit 1)
-	@printf "$(STATUS_GREEN)✅ System diagnostics gate passed. Workspace structure is pristine.$(NC)\n"
+		printf "   $(GREEN)✔$(NC) $(MUTED)Core artifacts verified$(NC)\n" || \
+		(printf "   $(RED)✘$(NC) $(MUTED)Anomaly: Missing key configuration$(NC)\n" && exit 1)
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Diagnostic gates passed$(NC)\n\n"
 
-run: check-deps
-	@$(PYTHON) -m src.main
-	@$(MAKE) brand
+run:
+	@$(UV) run tdoc
 
 clean:
-	@printf "$(DARK_AMBER)🧹 Flushing workspace compilation caches and storage artifacts...$(NC)\n"
+	@printf "\n$(MAGENTA) ◈$(NC) $(WHITE)Purging Workspace...$(NC)\n"
 	rm -rf __pycache__ */__pycache__ */*/__pycache__
-	rm -rf .pytest_cache .ruff_cache .pylint.d build/ dist/ *.egg-info
-	@printf "$(STATUS_GREEN)✨ Workspace tracking slate completely purged and reset.$(NC)\n"
+	rm -rf .pytest_cache .ruff_cache .pylint.d build/ dist/ *.egg-info .venv
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Caches and environments flushed$(NC)\n\n"
 
 pack-install:
-	@printf "$(ORANGE)📦 Compiling TDoc Core into Global Utility Module...$(NC)\n"
-	@mkdir -p $(PREFIX)/bin
-	@printf '#!/data/data/com.termux/files/usr/bin/sh\n' > $(PREFIX)/bin/tdoc
-	@printf 'export PYTHONPATH="$$HOME/TDoc:$$PYTHONPATH"\n' >> $(PREFIX)/bin/tdoc
-	@printf 'python3 $$HOME/TDoc/main.py "$$@"\n' >> $(PREFIX)/bin/tdoc
-	@chmod +x $(PREFIX)/bin/tdoc
-	@printf "$(STATUS_GREEN)✅ Global execution layer bound. Run 'tdoc' from anywhere.$(NC)\n"
-	@$(MAKE) brand
-
-brand:
-	@printf "$(PINK)$(BOLD)✨ FJ™ Cybertronic Systems ✨$(NC)\n"
-	@printf "$(DARK_AMBER)MMXXIV -- V 3.0.2$(NC)\n\n"
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Binding Global Execution Shortcut...$(NC)\n"
+	@mkdir -p "$${PREFIX:-/data/data/com.termux/files/usr}/bin"
+	@printf '#!/data/data/com.termux/files/usr/bin/sh\n' > "$${PREFIX:-/data/data/com.termux/files/usr}/bin/tdoc"
+	@printf 'cd "%s/Termux-Doctor" && uv run tdoc "$$@"\n' "$$HOME" >> "$${PREFIX:-/data/data/com.termux/files/usr}/bin/tdoc"
+	@chmod +x "$${PREFIX:-/data/data/com.termux/files/usr}/bin/tdoc"
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Alias bound. Executable globally as 'tdoc'$(NC)\n\n"

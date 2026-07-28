@@ -3,9 +3,10 @@ TDoc Hardware Subsystem - System Storage Benchmarks & Clean API Battery Telemetr
 """
 
 import shutil
+
 from src.interfaces import DiagnosticService
-from src.services.storage import StorageMonitor
 from src.services.battery import BatteryMonitor
+from src.services.storage import StorageMonitor
 
 
 class HealthService(DiagnosticService):

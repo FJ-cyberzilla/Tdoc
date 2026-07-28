@@ -6,11 +6,11 @@ import logging
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, List, Tuple, Any
+from typing import Any
 
-from rich.progress import Progress, BarColumn, TextColumn, SpinnerColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 
-from src.constants import SCAN_PORTS, CHECK_SITES
+from src.constants import CHECK_SITES, SCAN_PORTS
 from src.utils import helper
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class PortScanner:
     """Service to scan ports concurrently."""
 
-    def run(self) -> Dict[int, str]:
+    def run(self) -> dict[int, str]:
         """Scans ports concurrently with an interactive orange spectrum progress bar."""
         results = {}
 
@@ -31,11 +31,11 @@ class PortScanner:
         ) as progress:
             task = progress.add_task("Auditing local port sockets...", total=len(SCAN_PORTS))
 
-            def _check_single_port(port: int) -> Tuple[int, str]:
+            def _check_single_port(port: int) -> tuple[int, str]:
                 try:
                     with socket.create_connection(("127.0.0.1", port), timeout=0.4):
                         return port, "OPEN"
-                except (socket.timeout, ConnectionRefusedError, OSError):
+                except (TimeoutError, ConnectionRefusedError, OSError):
                     return port, "CLOSED"
                 finally:
                     progress.advance(task)
@@ -52,29 +52,16 @@ class PortScanner:
 class ConnectivityAnalyzer:
     """Service to validate global connectivity."""
 
-    def run(self) -> List[Dict[str, Any]]:
+    def run(self) -> list[dict[str, Any]]:
         """Validates global connectivity, watches for VPN drag, and offers direct fixes."""
         telemetry = []
         vpn_active = helper.detect_vpn_interfaces()
 
         for site in CHECK_SITES:
-            clean_host = site["url"].split("//")[-1].split("/")[0]
-            start_time = time.monotonic()
-
-            # Real low-level socket verification to avoid slow ping binary lockups
-            try:
-                socket.setdefaulttimeout(1.5)
-                socket.gethostbyname(clean_host)
-                latency = (time.monotonic() - start_time) * 1000
-                status = "OPTIMAL"
-                troubleshoot = None
-            except socket.error:
-                latency = -1
-                status = "BLOCKED"
-                troubleshoot = "Check Termux network access, or toggle your current VPN/Firewall."
+            latency, status, troubleshoot = self._verify_site_connectivity(site["url"])
 
             # Analyze anomalies
-            if latency > 250 and vpn_active and site["type"] == "local":
+            if status == "OPTIMAL" and latency > 250 and vpn_active and site["type"] == "local":
                 status = "WARNING"
                 troubleshoot = (
                     "High latency detected. Your current VPN interface might be misconfigured."
@@ -90,3 +77,20 @@ class ConnectivityAnalyzer:
             )
 
         return telemetry
+
+    def _verify_site_connectivity(self, url: str) -> tuple[float, str, str | None]:
+        """Performs low-level socket verification."""
+        clean_host = url.split("//")[-1].split("/")[0]
+        start_time = time.monotonic()
+
+        try:
+            socket.setdefaulttimeout(1.5)
+            socket.gethostbyname(clean_host)
+            latency = (time.monotonic() - start_time) * 1000
+            return latency, "OPTIMAL", None
+        except OSError:
+            return (
+                -1.0,
+                "BLOCKED",
+                "Check Termux network access, or toggle your current VPN/Firewall.",
+            )
