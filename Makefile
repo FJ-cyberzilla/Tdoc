@@ -94,7 +94,7 @@ install:
 	$(MAKE) sync
 
 lint:
-	@$(UV) run ruff check .
+	@$(UV) run -- ruff check .
 
 pack-install:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Binding Global Execution Shortcut...$(NC)\n"
