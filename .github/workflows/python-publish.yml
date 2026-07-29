@@ -15,14 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Build release distributions
-        run: |
-          python -m pip install build
-          python -m build
+        run: uv build  # uv's built-in build command
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
@@ -35,14 +37,12 @@ jobs:
     needs: [release-build]
     runs-on: ubuntu-latest
     
-    # 1. Required for PyPI Trusted Publishing (OIDC)
     permissions:
-      id-token: write 
-      
-    # 2. (Optional) Connect to a GitHub Environment if configured on PyPI
+      id-token: write
+    
     environment:
       name: pypi
-      url: https://pypi.org/p/<your-pypi-project-name>
+      url: https://pypi.org/p/tdoc
 
     steps:
       - name: Download built distributions
