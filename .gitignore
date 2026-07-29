@@ -26,3 +26,5 @@ dist/
 .idea/
 hotfix.sh
 config.json
+fix.txt
+PLAN.md
