@@ -56,11 +56,7 @@ clean:
 	@printf "$(GREEN) ✔$(NC) $(MUTED)Caches, eggs, and environments flushed$(NC)\n\n"
 
 diagnose: lint
-	@printf "$(CYAN) ◈$(NC) $(WHITE)Validating Operational Footprint...$(NC)\n"
-	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
-		printf "   $(GREEN)✔$(NC) $(MUTED)Core artifacts verified$(NC)\n" || \
-		(printf "   $(RED)✘$(NC) $(MUTED)Anomaly: Missing key configuration$(NC)\n" && exit 1)
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Diagnostic gates passed$(NC)\n\n"
+	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" || exit 1
 
 format:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Formatting Codebase (100-char max)...$(NC)\n"
@@ -98,9 +94,7 @@ install:
 	$(MAKE) sync
 
 lint:
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Executing Static Analysis...$(NC)\n"
-	$(UV) run ruff check .
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Linting passed cleanly$(NC)\n\n"
+	@$(UV) run ruff check .
 
 pack-install:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Binding Global Execution Shortcut...$(NC)\n"
@@ -114,16 +108,15 @@ run:
 	@$(UV) run tdoc
 
 sync:
-	$(UV) sync || (printf "$(RED) ✘$(NC) Failed to sync dependencies\n" && exit 1)
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Synchronizing Dependencies...$(NC)\n"
+	@$(UV) sync --dev || (printf "$(RED) ✘$(NC) Failed to sync dependencies\n" && exit 1)
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Dependencies synchronized$(NC)\n\n"
 
 test:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Launching Test Suite...$(NC)\n"
 	$(UV) run pytest
 	@printf "$(GREEN) ✔$(NC) $(MUTED)All assertions satisfied$(NC)\n\n"
 
-update: check-deps
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Performing Robust Update...$(NC)\n"
-	git pull || (printf "$(RED) ✘$(NC) Failed to pull from git\n" && exit 1)
+update:
 	$(MAKE) sync
 	$(MAKE) diagnose
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Update complete and validated$(NC)\n\n"
