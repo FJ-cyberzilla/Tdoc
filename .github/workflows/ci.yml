@@ -23,6 +23,12 @@ jobs:
     - name: Install dev dependencies
       run: uv sync --dev
 
+    - name: Inspect environment
+      run: |
+        uv run which python
+        uv run which ruff
+        ls -la .venv
+
     - name: Show TDOC Help
       run: make help
 
