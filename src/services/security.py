@@ -4,10 +4,13 @@ TDoc Security Subsystem – Hardened Privilege Audit
 
 from src.interfaces import DiagnosticService
 from src.services.security_checkers import (
+    EncryptionChecker,
     LDPreloadChecker,
+    PermissionChecker,
     RootPresenceChecker,
     SELinuxStatusChecker,
     SUIDBinaryChecker,
+    VulnerabilityChecker,
 )
 
 
@@ -20,6 +23,9 @@ class SecurityService(DiagnosticService):
             "selinux": SELinuxStatusChecker(),
             "ld_preload": LDPreloadChecker(),
             "termux_suid": SUIDBinaryChecker(),
+            "permissions": PermissionChecker(),
+            "encryption": EncryptionChecker(),
+            "vulnerabilities": VulnerabilityChecker(),
         }
 
     def run(self) -> dict:
@@ -38,4 +44,7 @@ class SecurityService(DiagnosticService):
                 "message": results["ld_preload"]["message"],
             },
             "termux_suid": results["termux_suid"]["message"],
+            "permissions": results["permissions"],
+            "encryption": results["encryption"],
+            "vulnerabilities": results["vulnerabilities"],
         }

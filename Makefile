@@ -18,7 +18,7 @@ WHITE   := \033[38;5;255m
 BOLD    := \033[1m
 NC      := \033[0m
 
-.PHONY: default help install format lint diagnose check-deps run clean pack-install test brand
+.PHONY: default help install format lint diagnose check-deps run clean pack-install test brand build
 
 default: help
 
@@ -42,8 +42,14 @@ help:
 	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "diagnose"     "linting & structural checks"
 	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "clean"        "Flush bytecode, cache, and venv"
 	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "pack-install" "Register global 'tdoc' execution alias"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "build"        "Build Python package"
 	@printf "$(CYAN) │$(NC)\n"
-	@printf "$(CYAN) ╰─$(NC) $(WHITE)FJ™ Cybertronic Systems$(NC) $(MUTED)· MMXXIV · V3.0.2$(NC)\n\n"
+	@printf "$(CYAN) ╰─$(NC) $(WHITE)FJ™ Cybertronic Systems$(NC) $(MUTED)· MMXXIV · V5.4.9$(NC)\n\n"
+
+build:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Building Package...$(NC)\n"
+	$(UV) run hatch build
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Build successful$(NC)\n\n"
 
 install:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Initializing Core Infrastructure...$(NC)\n"
@@ -91,9 +97,12 @@ run:
 
 clean:
 	@printf "\n$(MAGENTA) ◈$(NC) $(WHITE)Purging Workspace...$(NC)\n"
-	rm -rf __pycache__ */__pycache__ */*/__pycache__
-	rm -rf .pytest_cache .ruff_cache .pylint.d build/ dist/ *.egg-info .venv
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Caches and environments flushed$(NC)\n\n"
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type d -name ".ruff_cache" -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	rm -rf build/ dist/ *.egg-info .eggs .venv
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Caches, eggs, and environments flushed$(NC)\n\n"
 
 pack-install:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Binding Global Execution Shortcut...$(NC)\n"

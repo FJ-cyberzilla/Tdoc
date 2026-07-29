@@ -2,7 +2,7 @@
 TDoc Global Constants - Versioning & Engine Metadata
 """
 
-__version__ = "1.2.0"
+__version__ = "5.4.9"
 APP_NAME = "TDoc Platform Diagnostics"
 CODENAME = "CYBER-MATRIX"
 RICH_THEME_CONFIG = {

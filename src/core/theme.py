@@ -45,7 +45,7 @@ class ThemeManager:
         "hud.value": "bold #FFFFFF",  # Pure white for exact numbers
         "hud.unit": "dim #A1A1AA",  # Faded grey for % / MB / °C
         # --- Alerts & Navigation ---
-        "navigation.active": "bold #10B981 on #064E3B",  # Emerald text on dark green bg (Pill effect)
+        "navigation.active": "bold #10B981 on #064E3B",  # Emerald text on dark green bg
         "navigation.inactive": "dim #71717A",
         "header.main": "bold #F8F9FA",  # High-contrast header text
         "error.text": "bold #FEF2F2 on #991B1B",  # High-contrast error badge
@@ -73,15 +73,20 @@ class ThemeManager:
                      If False, higher is worse (e.g., CPU Temp, Ping, Disk Space).
         """
         if reverse:
-            if value <= crit:
-                return "status.critical"
-            if value <= warn:
-                return "status.warning"
-            return "status.success"
+            return self._get_reverse_style(value, warn, crit)
+        return self._get_standard_style(value, warn, crit)
 
+    def _get_standard_style(self, value: float, warn: float, crit: float) -> str:
         if value >= crit:
             return "status.critical"
         if value >= warn:
+            return "status.warning"
+        return "status.success"
+
+    def _get_reverse_style(self, value: float, warn: float, crit: float) -> str:
+        if value <= crit:
+            return "status.critical"
+        if value <= warn:
             return "status.warning"
         return "status.success"
 

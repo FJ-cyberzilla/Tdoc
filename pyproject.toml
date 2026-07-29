@@ -1,15 +1,15 @@
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "tdoc"
-version = "2.6.0"
+version = "5.4.9"
 description = "SOTA Termux System Integrity Diagnostics & Control HUD"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "u0_a330" }
+    { name = "FJ-cyberzilla" }
 ]
 dependencies = [
     "requests>=2.34.2",
@@ -17,20 +17,25 @@ dependencies = [
     "urllib3>=2.7.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "ruff>=0.9.0",
+    "radon>=6.0.1",
+]
+
 [project.scripts]
 tdoc = "src.main:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
-
-[tool.black]
-target-version = ['py314']
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py310"
 
 [tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["BLE001", "S110", "RUF012"]
 
 [tool.uv]

@@ -1,5 +1,22 @@
 """
-TDoc Command Center - Advanced Network Engine
+TDoc Command Center - Advanced Network Diagnostic Engine.
+
+This module provides the core high-performance diagnostic services for TDoc,
+specifically focusing on concurrent network port scanning and global connectivity
+latency analysis.
+
+Services:
+    - PortScanner: Uses a ThreadPoolExecutor to perform concurrent TCP socket
+      scans against predefined port lists. Features a rich terminal progress bar.
+    - ConnectivityAnalyzer: Validates network health by checking latency against
+      a set of critical endpoints and detecting anomalies (e.g., VPN drag).
+
+Example usage:
+    scanner = PortScanner()
+    open_ports = scanner.run()
+
+    analyzer = ConnectivityAnalyzer()
+    network_telemetry = analyzer.run()
 """
 
 import logging
@@ -17,10 +34,23 @@ logger = logging.getLogger(__name__)
 
 
 class PortScanner:
-    """Service to scan ports concurrently."""
+    """
+    Service to perform concurrent local network port scans.
+
+    Utilizes a ThreadPoolExecutor to efficiently check multiple ports simultaneously
+    with a capped concurrency limit.
+    """
 
     def run(self) -> dict[int, str]:
-        """Scans ports concurrently with an interactive orange spectrum progress bar."""
+        """
+        Scans predefined ports concurrently and returns their status.
+
+        The method features an interactive orange-spectrum progress bar provided
+        by the `rich` library.
+
+        Returns:
+            dict[int, str]: A dictionary mapping port numbers to their status ('OPEN' or 'CLOSED').
+        """
         results = {}
 
         with Progress(
@@ -32,6 +62,7 @@ class PortScanner:
             task = progress.add_task("Auditing local port sockets...", total=len(SCAN_PORTS))
 
             def _check_single_port(port: int) -> tuple[int, str]:
+                """Checks availability of a single TCP port."""
                 try:
                     with socket.create_connection(("127.0.0.1", port), timeout=0.4):
                         return port, "OPEN"
@@ -40,6 +71,7 @@ class PortScanner:
                 finally:
                     progress.advance(task)
 
+            # Cap concurrency to 8 threads to avoid resource exhaustion
             with ThreadPoolExecutor(max_workers=8) as executor:
                 futures = [executor.submit(_check_single_port, p) for p in SCAN_PORTS]
                 for future in as_completed(futures):
@@ -50,22 +82,34 @@ class PortScanner:
 
 
 class ConnectivityAnalyzer:
-    """Service to validate global connectivity."""
+    """
+    Service to validate global connectivity and network health.
+
+    Performs latency checks against critical endpoints and performs basic
+    anomaly detection (e.g., identifying VPN-related latency spikes).
+    """
 
     def run(self) -> list[dict[str, Any]]:
-        """Validates global connectivity, watches for VPN drag, and offers direct fixes."""
+        """
+        Validates global connectivity.
+
+        Checks latency, status, and provides troubleshooting guidance for
+        predefined endpoints.
+
+        Returns:
+            list[dict[str, Any]]: A list of dictionaries, each containing
+            site 'name', 'latency_ms', 'status', and 'troubleshoot' advice.
+        """
         telemetry = []
         vpn_active = helper.detect_vpn_interfaces()
 
         for site in CHECK_SITES:
             latency, status, troubleshoot = self._verify_site_connectivity(site["url"])
 
-            # Analyze anomalies
-            if status == "OPTIMAL" and latency > 250 and vpn_active and site["type"] == "local":
-                status = "WARNING"
-                troubleshoot = (
-                    "High latency detected. Your current VPN interface might be misconfigured."
-                )
+            # Apply anomaly detection
+            status, troubleshoot = self._apply_anomaly_detection(
+                site, latency, status, troubleshoot, vpn_active
+            )
 
             telemetry.append(
                 {
@@ -78,8 +122,34 @@ class ConnectivityAnalyzer:
 
         return telemetry
 
+    def _apply_anomaly_detection(
+        self,
+        site: dict[str, Any],
+        latency: float,
+        status: str,
+        troubleshoot: str | None,
+        vpn_active: bool,
+    ) -> tuple[str, str | None]:
+        """
+        Adjusts status and troubleshooting based on network context.
+        """
+        if status == "OPTIMAL" and latency > 250 and vpn_active and site.get("type") == "local":
+            return (
+                "WARNING",
+                "High latency detected. Your current VPN interface might be misconfigured.",
+            )
+        return status, troubleshoot
+
     def _verify_site_connectivity(self, url: str) -> tuple[float, str, str | None]:
-        """Performs low-level socket verification."""
+        """
+        Performs low-level socket-based latency verification.
+
+        Args:
+            url (str): The URL/host string to check.
+
+        Returns:
+            tuple[float, str, str | None]: (latency_in_ms, status_label, error_message).
+        """
         clean_host = url.split("//")[-1].split("/")[0]
         start_time = time.monotonic()
 

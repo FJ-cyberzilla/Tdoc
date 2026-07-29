@@ -1,10 +1,10 @@
 graph TD
     %% Main Entry
     Main[main.py] --> Router[TDocRouter]
-    Main --> UI[ui_manager.py]
+    Main --> HUD[HUDController]
     
     %% UI interactions
-    UI --> Router
+    HUD --> Router
     
     %% Routing Logic
     Router --> Factory[ServiceFactory]
@@ -16,18 +16,23 @@ graph TD
     Factory --> Updater[UpdaterService]
     Factory --> PkgMgr[PackageManagerService]
     Factory --> Util[UtilityService]
+    Factory --> Config[ConfigService]
+    Factory --> Persistence[PersistenceService]
     
     %% Utility Tools
     Util --> Tools[htop/neofetch]
+    Util --> Robustness[robustness.py]
     
     %% Styles & Constants
     Router -.-> Const[constants.py]
-    UI -.-> Theme[core/theme.py]
+    HUD -.-> Theme[core/theme.py]
 
     subgraph Core
     Router
     Factory
     Const
+    Config
+    Persistence
     end
 
     subgraph Services
@@ -37,9 +42,10 @@ graph TD
     Updater
     PkgMgr
     Util
+    Robustness
     end
     
     subgraph View
-    UI
+    HUD
     Theme
     end

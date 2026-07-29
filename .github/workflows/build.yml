@@ -36,5 +36,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          tags: "${{ secrets.DOCKER_USERNAME }}/tdoc:latest"  # Changed to match your repo name
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/docker-build-cloud-demo:latest
+            ${{ secrets.DOCKER_USERNAME }}/tdoc:latest
           outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry' }}

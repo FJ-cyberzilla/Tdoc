@@ -4,9 +4,11 @@ Service Factory
 
 from typing import Any
 
+from src.services.config import ConfigService
 from src.services.health import HealthService
 from src.services.network import NetworkService
 from src.services.package_manager import PackageManagerService
+from src.services.persistence import PersistenceService
 from src.services.platform import PlatformService
 from src.services.security import SecurityService
 from src.services.updater import UpdaterService
@@ -20,6 +22,8 @@ class ServiceFactory:
     def get_services() -> dict[str, Any]:
         """Returns a dictionary of initialized services."""
         return {
+            "config": ConfigService(),
+            "persistence": PersistenceService(),
             "platform": PlatformService(),
             "network": NetworkService(),
             "security": SecurityService(),

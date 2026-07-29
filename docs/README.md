@@ -1,41 +1,22 @@
-# TDoc :: Platform Matrix
-*SOTA Termux System Integrity Diagnostics & Control HUD*
+# Termux-Doctor Documentation
 
-### https://fj-cyberzilla.github.io/Tdoc/
----
+This directory contains technical documentation for the Termux-Doctor (TDoc) project.
 
-## ⚡ Overview
-TDoc is a hardened, modular diagnostic suite designed specifically for the Termux environment. It provides real-time monitoring of system health, network topology, security auditing, and workspace synchronization, all presented through an aesthetic terminal HUD.
+## Project Overview
+Termux-Doctor is a high-performance diagnostic suite designed specifically for the Termux ecosystem, providing advanced system integrity diagnostics, real-time telemetry, and automated security auditing in a unified control HUD.
 
-## 🏗️ Architectural Core
-The system follows a strict modular architecture to ensure security, maintainability, and extensibility:
+## Documentation Structure
+- **[Architecture](ARCHITECTURE.md)**: System design and extensibility guide.
+- **[Development Guide](../DEVELOPMENT.md)**: Coding standards, testing, and contribution workflow.
+- **[User Guide](../USER_GUIDE.md)**: Detailed usage, configuration, and troubleshooting.
+- **[Android Commands](ANDROID_COMMANDS.md)**: Android-specific diagnostic techniques and tools.
 
-- **CLI Interface (`main.py`)**: The central entry gate, handling the security sandbox and application lifecycle.
-- **HUD Layer (`ui/`)**: A reactive, theme-based UI layer rendering terminal panels using `rich`.
-- **Orchestrator (`router.py`)**: A centralized routing layer decoupling the UI from system logic via the `TDocRouter`.
-- **Service Layer (`services/`)**: Focused, single-responsibility components managing:
-    - **Platform**: Hardware metrics, storage, environment.
-    - **Network**: Topology mapping, VPN detection, mirror health.
-    - **Security**: Audit of SUID, root, and SELinux posture.
-    - **Package Manager**: Efficient inventory of installed binaries.
-    - **Utility**: On-demand installation and execution of external tools (`htop`, `neofetch`).
+## Key Architecture Components
+- **Router**: Central orchestration layer.
+- **Service Layer**: Independent diagnostic modules.
+- **UI Layer**: MVC-pattern terminal HUD.
+- **Persistence Layer**: Historical report management.
+- **Robustness**: Transient failure management via retry decorators.
 
-## 🚀 Operations
-The project uses `uv` for deterministic dependency management and includes a comprehensive `Makefile` for orchestration.
-
-### Key Targets:
-| Command | Action |
-| :--- | :--- |
-| `make install` | Boots infrastructure and dependencies. |
-| `make run` | Starts the interactive telemetry HUD. |
-| `make lint` | Runs `ruff` static analysis. |
-| `make diagnose` | Full health audit (Lint + Structural footprint). |
-| `make clean` | Purges caches and build artifacts. |
-
-## 🛠️ Usage
-1. Initialize: `make install`
-2. Run: `make run`
-3. Navigate: Use the main menu to route diagnostics.
-
----
-*Developed for FJ™ Cybertronic Systems.*
+## Operations
+The project uses `uv` for dependency management and `make` for task orchestration. Refer to the root `Makefile` for available commands.

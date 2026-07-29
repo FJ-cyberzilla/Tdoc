@@ -3,14 +3,18 @@ TDoc Network Subsystem - Dynamic State Mapping
 """
 
 import socket
+import urllib.error
 import urllib.request
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from src.interfaces import DiagnosticService
 from src.services.network_checkers import (
     DNSChecker,
     HotspotChecker,
+    NetworkSpeedChecker,
+    ProxyChecker,
     RoutingTopologyChecker,
+    TelephonyChecker,
     VPNStatusChecker,
 )
 
@@ -25,23 +29,29 @@ class MirrorResult(NamedTuple):
 class NetworkService(DiagnosticService):
     """Service to evaluate network connectivity and state."""
 
-    def __init__(self):
-        self._checkers = {
+    def __init__(self) -> None:
+        self._checkers: dict[str, Any] = {
             "dns": DNSChecker(),
             "topology": RoutingTopologyChecker(),
             "vpn": VPNStatusChecker(),
             "hotspot": HotspotChecker(),
+            "telephony": TelephonyChecker(),
+            "proxy": ProxyChecker(),
+            "speed": NetworkSpeedChecker(),
         }
 
-    def run(self) -> dict:
+    def run(self) -> dict[str, Any]:
         """Executes network diagnostics inspecting routes, dynamic states, and mirror failovers."""
-        mirror = self._check_termux_mirrors()
+        mirror: MirrorResult = self._check_termux_mirrors()
         return {
             "topology": self._checkers["topology"].check(),
             "local_ip": self._get_local_ip(),
             "dns": self._checkers["dns"].check(),
             "hotspot_active": self._checkers["hotspot"].check(),
             "vpn": self._checkers["vpn"].check(),
+            "telephony": self._checkers["telephony"].check(),
+            "proxy": self._checkers["proxy"].check(),
+            "speed": self._checkers["speed"].check(),
             "mirror": {
                 "online": mirror.online,
                 "details": mirror.details,
@@ -51,13 +61,12 @@ class NetworkService(DiagnosticService):
     def _get_local_ip(self) -> str:
         """Finds the primary local IP address."""
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            # Doesn't need to be reachable, just triggers routing logic
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            return local_ip
-        except Exception:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                # Doesn't need to be reachable, just triggers routing logic
+                s.connect(("8.8.8.8", 80))
+                local_ip: str = s.getsockname()[0]
+                return local_ip
+        except OSError:
             return "127.0.0.1"
 
     def _check_termux_mirrors(self) -> MirrorResult:
@@ -73,7 +82,7 @@ class NetworkService(DiagnosticService):
             try:
                 with urllib.request.urlopen(url, timeout=2.0) as _:
                     pass
-                domain = url.replace("https://", "")
+                domain: str = url.replace("https://", "")
                 return MirrorResult(True, domain)
             except (urllib.error.URLError, TimeoutError):
                 continue
