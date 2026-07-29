@@ -28,6 +28,6 @@ jobs:
 
     - name: Run diagnose
       run: uv run make diagnose
-- name: Run tests
-  run: uv run make test
 
+    - name: Run tests
+      run: uv run make test
