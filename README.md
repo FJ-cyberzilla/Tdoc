@@ -3,7 +3,6 @@
 [![Version](https://img.shields.io/badge/version-5.4.9-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
-[![pages-build-deployment](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment)
 Termux-Doctor is a high-performance diagnostic suite designed specifically for the Termux ecosystem. It provides advanced system integrity diagnostics, real-time telemetry, and automated security auditing in a unified control HUD.
 
 ## Features
@@ -17,8 +16,8 @@ Termux-Doctor is a high-performance diagnostic suite designed specifically for t
 ## Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/FJ-cyberzilla/Termux-Doctor.git
-cd Termux-Doctor
+git clone https://github.com/FJ-cyberzilla/Tdoc.git
+cd Tdoc
 
 # Initialize environment
 make install
