@@ -14,8 +14,15 @@ Termux-Doctor is a high-performance diagnostic suite designed specifically for t
 
 ## Quick Start
 ```bash
-pip install tdoc
-tdoc
+# Clone the repository
+git clone https://github.com/FJ-cyberzilla/Termux-Doctor.git
+cd Termux-Doctor
+
+# Initialize environment
+make install
+
+# Boot the telemetry HUD
+make run
 ```
 
 ## Documentation

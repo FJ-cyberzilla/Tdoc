@@ -1,21 +1,44 @@
 # Termux-Doctor User Guide
 
 Welcome to the official user guide for Termux-Doctor (TDoc), the comprehensive diagnostic suite for the Termux ecosystem.
-
 ## 1. Getting Started
 ### Installation
-Ensure you have Python installed in your Termux environment.
+TDoc relies on `uv` for dependency management and system orchestration.
 ```bash
-pip install tdoc
+# Clone the repository
+git clone https://github.com/FJ-cyberzilla/Termux-Doctor.git
+cd Termux-Doctor
+
+# Initialize system and dependencies
+make install
 ```
 
 ### Quick Start
-Execute the diagnostic tool from your terminal:
+To launch the diagnostic HUD:
 ```bash
-tdoc
+make run
 ```
 
-## 2. Features
+## 2. Command Reference
+TDoc uses a comprehensive `Makefile` to orchestrate tasks. Available commands:
+
+| Command | Description |
+| :--- | :--- |
+| `make build` | Build Python package |
+| `make check-deps` | Audit presence of uv and utilities |
+| `make clean` | Flush bytecode, cache, and venv |
+| `make diagnose` | Linting & structural checks |
+| `make format` | Auto-format Python code via ruff |
+| `make install` | Setup system & dependencies via uv |
+| `make lint` | Run Ruff static code analysis |
+| `make pack-install` | Register global 'tdoc' execution alias |
+| `make run` | Boot the interactive telemetry HUD |
+| `make sync` | Synchronize project dependencies |
+| `make test` | Execute test suite via pytest |
+| `make update` | Robust project update |
+
+## 3. Features
+...
 - **Telemetry Dashboard**: Real-time monitoring of system metrics (CPU, RAM, Battery).
 - **Network Deep-Dive**: Connectivity checks, DNS leak detection, and hotspot monitoring.
 - **Security Audit**: Automated scanning for SUID anomalies, SELinux status, and root integrity.

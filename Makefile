@@ -13,49 +13,25 @@ CYAN    := \033[38;5;51m
 MAGENTA := \033[38;5;198m
 GREEN   := \033[38;5;46m
 RED     := \033[38;5;196m
+DIMRED  := \033[38;5;160m
 MUTED   := \033[38;5;242m
 WHITE   := \033[38;5;255m
+ORANGE  := \033[38;5;208m
 BOLD    := \033[1m
 NC      := \033[0m
 
-.PHONY: default help install format lint diagnose check-deps run clean pack-install test brand build
+.PHONY: build check-deps clean diagnose format help install lint pack-install run sync test update
 
 default: help
 
-help:
-	@printf "\n"
-	@printf "$(CYAN) █$(NC) $(BOLD)$(WHITE)⚡ T D O C$(NC)\n"
-	@printf "$(CYAN) █$(NC) $(MAGENTA)Platform Automation Engine$(NC)\n"
-	@printf "$(CYAN) │$(NC)\n"
-	@printf "$(CYAN) │ $(NC)$(BOLD)❖ ARCHITECTURE$(NC)\n"
-	@printf "$(CYAN) │ $(NC)$(MUTED)  Lightweight Termux diagnostics, hardware telemetry,$(NC)\n"
-	@printf "$(CYAN) │ $(NC)$(MUTED)  and security isolation routing.$(NC)\n"
-	@printf "$(CYAN) │$(NC)\n"
-	@printf "$(CYAN) │ $(NC)$(BOLD)❖ COMMAND MATRIX$(NC)\n"
-	@printf "$(CYAN) │$(NC)\n"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "install"      "Setup system & dependencies via uv"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "check-deps"   "Audit presence of uv and utilities"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "run"          "Boot the interactive telemetry HUD"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "test"         "Execute test suite via pytest"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "format"       "Auto-format Python code via ruff"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "lint"         "Run Ruff static code analysis"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "diagnose"     "linting & structural checks"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "clean"        "Flush bytecode, cache, and venv"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "pack-install" "Register global 'tdoc' execution alias"
-	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "build"        "Build Python package"
-	@printf "$(CYAN) │$(NC)\n"
-	@printf "$(CYAN) ╰─$(NC) $(WHITE)FJ™ Cybertronic Systems$(NC) $(MUTED)· MMXXIV · V5.4.9$(NC)\n\n"
+# ------------------------------------------------------------------------------------
+# COMMAND MATRIX
+# ------------------------------------------------------------------------------------
 
 build:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Building Package...$(NC)\n"
-	$(UV) run hatch build
+	$(PYTHON) -m build
 	@printf "$(GREEN) ✔$(NC) $(MUTED)Build successful$(NC)\n\n"
-
-install:
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Initializing Core Infrastructure...$(NC)\n"
-	pkg install -y termux-api
-	$(UV) sync
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Dependencies synchronized$(NC)\n\n"
 
 check-deps:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Auditing System Dependencies...$(NC)\n"
@@ -70,31 +46,6 @@ check-deps:
 		printf "   $(RED)✘$(NC) $(MUTED)uv (Run: curl -LsSf https://astral.sh/uv/install.sh | sh)$(NC)\n\n"; \
 	fi
 
-lint:
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Executing Static Analysis...$(NC)\n"
-	$(UV) run ruff check .
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Linting passed cleanly$(NC)\n\n"
-
-format:
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Formatting Codebase (100-char max)...$(NC)\n"
-	$(UV) run ruff format --line-length 100 .
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Codebase aligned$(NC)\n\n"
-
-test:
-	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Launching Test Suite...$(NC)\n"
-	$(UV) run pytest
-	@printf "$(GREEN) ✔$(NC) $(MUTED)All assertions satisfied$(NC)\n\n"
-
-diagnose: lint
-	@printf "$(CYAN) ◈$(NC) $(WHITE)Validating Operational Footprint...$(NC)\n"
-	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
-		printf "   $(GREEN)✔$(NC) $(MUTED)Core artifacts verified$(NC)\n" || \
-		(printf "   $(RED)✘$(NC) $(MUTED)Anomaly: Missing key configuration$(NC)\n" && exit 1)
-	@printf "$(GREEN) ✔$(NC) $(MUTED)Diagnostic gates passed$(NC)\n\n"
-
-run:
-	@$(UV) run tdoc
-
 clean:
 	@printf "\n$(MAGENTA) ◈$(NC) $(WHITE)Purging Workspace...$(NC)\n"
 	find . -type d -name "__pycache__" -exec rm -rf {} +
@@ -104,6 +55,53 @@ clean:
 	rm -rf build/ dist/ *.egg-info .eggs .venv
 	@printf "$(GREEN) ✔$(NC) $(MUTED)Caches, eggs, and environments flushed$(NC)\n\n"
 
+diagnose: lint
+	@printf "$(CYAN) ◈$(NC) $(WHITE)Validating Operational Footprint...$(NC)\n"
+	@$(PYTHON) -c "import os, sys; sys.exit(0 if os.path.exists('src/constants.py') else 1)" && \
+		printf "   $(GREEN)✔$(NC) $(MUTED)Core artifacts verified$(NC)\n" || \
+		(printf "   $(RED)✘$(NC) $(MUTED)Anomaly: Missing key configuration$(NC)\n" && exit 1)
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Diagnostic gates passed$(NC)\n\n"
+
+format:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Formatting Codebase (100-char max)...$(NC)\n"
+	$(UV) run ruff format --line-length 100 .
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Codebase aligned$(NC)\n\n"
+
+help:
+	@printf "\n"
+	@printf "$(CYAN) █$(NC) $(BOLD)$(WHITE)⚡ T D O C$(NC)\n"
+	@printf "$(CYAN) █$(NC) $(ORANGE)Platform Automation Engine$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(BOLD)❖ ARCHITECTURE$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(DIMRED)  Termux diagnostic and telemetry suite.$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │ $(NC)$(BOLD)❖ COMMAND MATRIX$(NC)\n"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "build"        "Build Python package"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "check-deps"   "Audit presence of uv and utilities"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "clean"        "Flush bytecode, cache, and venv"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "diagnose"     "linting & structural checks"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "format"       "Auto-format Python code via ruff"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "install"      "Setup system & dependencies via uv"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "lint"         "Run Ruff static code analysis"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "pack-install" "Bind global 'tdoc' execution alias"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "run"          "Boot the interactive telemetry HUD"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "sync"         "Synchronize project dependencies"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "test"         "Execute test suite via pytest"
+	@printf "$(CYAN) │   $(MAGENTA)▷$(NC) $(BOLD)make$(NC) $(CYAN)%-13s$(NC) $(MUTED)%s$(NC)\n" "update"       "Robust project update"
+	@printf "$(CYAN) │$(NC)\n"
+	@printf "$(CYAN) ╰─$(NC) $(MAGENTA)FJ™ Cybertronic Systems$(NC) $(MUTED)· MMXXIV · V5.4.9$(NC)\n\n"
+
+install:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Initializing Core Infrastructure...$(NC)\n"
+	pkg install -y termux-api || (printf "$(RED) ✘$(NC) Failed to install termux-api\n" && exit 1)
+	$(MAKE) sync
+
+lint:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Executing Static Analysis...$(NC)\n"
+	$(UV) run ruff check .
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Linting passed cleanly$(NC)\n\n"
+
 pack-install:
 	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Binding Global Execution Shortcut...$(NC)\n"
 	@mkdir -p "$${PREFIX:-/data/data/com.termux/files/usr}/bin"
@@ -111,3 +109,21 @@ pack-install:
 	@printf 'cd "%s/Termux-Doctor" && uv run tdoc "$$@"\n' "$$HOME" >> "$${PREFIX:-/data/data/com.termux/files/usr}/bin/tdoc"
 	@chmod +x "$${PREFIX:-/data/data/com.termux/files/usr}/bin/tdoc"
 	@printf "$(GREEN) ✔$(NC) $(MUTED)Alias bound. Executable globally as 'tdoc'$(NC)\n\n"
+
+run:
+	@$(UV) run tdoc
+
+sync:
+	$(UV) sync || (printf "$(RED) ✘$(NC) Failed to sync dependencies\n" && exit 1)
+
+test:
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Launching Test Suite...$(NC)\n"
+	$(UV) run pytest
+	@printf "$(GREEN) ✔$(NC) $(MUTED)All assertions satisfied$(NC)\n\n"
+
+update: check-deps
+	@printf "\n$(CYAN) ◈$(NC) $(WHITE)Performing Robust Update...$(NC)\n"
+	git pull || (printf "$(RED) ✘$(NC) Failed to pull from git\n" && exit 1)
+	$(MAKE) sync
+	$(MAKE) diagnose
+	@printf "$(GREEN) ✔$(NC) $(MUTED)Update complete and validated$(NC)\n\n"
