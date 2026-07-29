@@ -20,17 +20,27 @@ jobs:
     - name: Install uv
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    - name: Install dependencies with dev extras
-      run: uv sync --dev  # This installs ruff, pytest, radon
+    - name: Install dev dependencies
+      run: uv sync --dev
 
     - name: Show TDOC Help
       run: make help
 
     - name: Run lint
-      run: uv run make lint
+      run: make lint
+
+    - name: Run format check (non-modifying)
+      run: uv run ruff format --check --line-length 100 .
 
     - name: Run diagnose
-      run: uv run make diagnose
+      run: make diagnose
 
-    - name: Run tests
-      run: uv run make test
+    - name: Run tests with coverage
+      run: uv run pytest -v --cov=src --cov-report=term
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: .pytest_cache/
