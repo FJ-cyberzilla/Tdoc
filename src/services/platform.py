@@ -3,6 +3,7 @@ TDoc Platform Service - Composite diagnostic aggregator.
 """
 
 from typing import Any
+
 from src.interfaces import DiagnosticService
 from src.services.environment import EnvironmentService
 from src.services.health import HealthService

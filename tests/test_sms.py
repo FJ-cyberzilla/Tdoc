@@ -9,10 +9,12 @@ from src.services.network.sms import SMSChecker
 def checker():
     return SMSChecker()
 
+
 def test_analyze_empty_messages(checker):
     result = checker.analyze_messages([])
     assert result["total_messages"] == 0
     assert result["sent_recv_ratio"] == "0/0"
+
 
 def test_analyze_complex_messages(checker):
     mock_messages = [
@@ -27,10 +29,10 @@ def test_analyze_complex_messages(checker):
     assert len(result["risky_domains"]) > 0
     assert result["sent_recv_ratio"] == "1/4"
 
+
 def test_sms_checker_failure_handling():
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stdout="")
         checker = SMSChecker()
         result = checker.check()
         assert result["error"] == "Failed to access SMS"
-

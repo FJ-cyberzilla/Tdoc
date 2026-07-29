@@ -66,7 +66,7 @@ class TelephonyModel:
         for key in fallback:
             if key in device:
                 return str(device[key])
-        
+
         if "error" in device:
             return "Access Denied"
         return "N/A"
@@ -76,17 +76,17 @@ class TelephonyModel:
         if cell and (cell[0].get("type") or cell[0].get("network_type")):
             val = cell[0].get("type") or cell[0].get("network_type")
             return str(val).upper()
-        
+
         if "phone_type" in device:
             return str(device["phone_type"]).upper()
-        
+
         return "N/A"
 
     @staticmethod
     def _parse_signal_dbm(sig: dict[str, Any], cell: list[dict[str, Any]]) -> str:
         if "dbm" in sig:
             return f"{sig['dbm']} dBm"
-        
+
         for entry in cell:
             dbm = entry.get("dbm") or entry.get("lte_rsrp")
             if dbm:

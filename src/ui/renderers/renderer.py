@@ -365,7 +365,6 @@ class UIRenderer:
             label: str = key.replace("_", " ").title()
             grid.add_row(label, str(value) if value else "[text.muted]Not Available[/]")
 
-
     def render_security_metrics(self, data: dict[str, Any]):
         """Renders the Security Audit panel."""
         grid = self.grid_builder.create_base_grid(label_width=16)

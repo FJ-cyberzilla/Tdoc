@@ -16,7 +16,9 @@ class CommandDispatcher:
         self.utility_service = utility_service
         self.action_map: dict[str, tuple[str, Callable[[Any], Any]]] = {}
 
-    def register_command(self, choice: str, action_name: str, handler: Callable[[Any], Any]) -> None:
+    def register_command(
+        self, choice: str, action_name: str, handler: Callable[[Any], Any]
+    ) -> None:
         """Registers a command mapping."""
         self.action_map[choice] = (action_name, handler)
 

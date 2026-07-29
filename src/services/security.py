@@ -3,6 +3,7 @@ TDoc Security Subsystem – Hardened Privilege Audit
 """
 
 from typing import Any
+
 from src.interfaces import DiagnosticService
 from src.services.security_checkers import (
     EncryptionChecker,
