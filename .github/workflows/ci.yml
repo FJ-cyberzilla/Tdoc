@@ -27,8 +27,9 @@ jobs:
 
     - name: Inspect environment
       run: |
-        uv run which python
-        uv run which ruff
+        uv run python --version
+        uv pip list
+        uv run ruff --version || echo "ruff not found"
         ls -la .venv
 
     - name: Show TDOC Help
