@@ -11,6 +11,7 @@ from src.ui.handlers import (
     NetworkHandler,
     PackageManagerHandler,
     SecurityHandler,
+    SensorHandler,
     UpdaterHandler,
 )
 from src.ui.renderers.renderer import UIRenderer
@@ -29,18 +30,29 @@ class HUDController:
 
     def _register_commands(self):
         """Registers commands to the dispatcher."""
-        self.dispatcher.register_command("1", "dashboard", DashboardHandler(self.renderer).handle)
-        self.dispatcher.register_command("2", "network", NetworkHandler(self.renderer).handle)
-        self.dispatcher.register_command("3", "security", SecurityHandler(self.renderer).handle)
-        self.dispatcher.register_command("4", "updater", UpdaterHandler(self.renderer).handle)
         self.dispatcher.register_command(
-            "5", "package_manager", PackageManagerHandler(self.renderer).handle
+            "1", "dashboard", DashboardHandler(self.renderer, self.router).handle
+        )
+        self.dispatcher.register_command(
+            "2", "network", NetworkHandler(self.renderer, self.router).handle
+        )
+        self.dispatcher.register_command(
+            "3", "security", SecurityHandler(self.renderer, self.router).handle
+        )
+        self.dispatcher.register_command(
+            "4", "updater", UpdaterHandler(self.renderer, self.router).handle
+        )
+        self.dispatcher.register_command(
+            "5", "package_manager", PackageManagerHandler(self.renderer, self.router).handle
         )
         self.dispatcher.register_command(
             "6", "htop", lambda _: self.utility_service.run_tool("htop")
         )
         self.dispatcher.register_command(
             "7", "neofetch", lambda _: self.utility_service.run_tool("neofetch")
+        )
+        self.dispatcher.register_command(
+            "8", "sensor_hub", SensorHandler(self.renderer, self.router).handle
         )
 
     def start(self):
@@ -51,11 +63,10 @@ class HUDController:
             self.renderer.render_navigation()
 
             try:
-                prompt = (
-                    f"\n{self.theme.cyan}▲{self.theme.reset} "
-                    f"{self.theme.muted}tdoc ⨠{self.theme.reset} "
-                )
-                choice = input(prompt).strip()
+                # Rich console.input allows markup tags directly
+                choice = self.theme.console.input(
+                    "\n[accent.primary]▲[/] [text.muted]tdoc ⨠[/] "
+                ).strip()
             except (KeyboardInterrupt, EOFError):
                 self.theme.console.print("\n[text.muted]Session terminated by user.[/]")
                 break
@@ -65,7 +76,7 @@ class HUDController:
                 break
 
             self._handle_choice(choice)
-            input(f"\n{self.theme.muted}↵ Press Enter to return...{self.theme.reset}")
+            self.theme.console.input("\n[text.muted]↵ Press Enter to return...[/]")
 
     def _handle_choice(self, choice: str):
         """Dispatches choices using the command dispatcher."""

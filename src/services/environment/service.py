@@ -9,6 +9,7 @@ from typing import Any
 
 from .cpu import CPUCollector
 from .ram import RAMCollector
+from .sensors import SensorCollector
 from .system import SystemCollector
 from .uptime import UptimeCollector
 
@@ -21,6 +22,7 @@ class EnvironmentService:
         self.ram_collector = RAMCollector()
         self.uptime_collector = UptimeCollector()
         self.system_collector = SystemCollector()
+        self.sensor_collector = SensorCollector()
 
     def run(self) -> dict[str, Any]:
         """Evaluates cross-platform environmental properties and ecosystem status."""
@@ -36,6 +38,7 @@ class EnvironmentService:
             "uptime": self.uptime_collector.get_uptime(),
             "cpu": self.cpu_collector.get_cpu_info(),
             "ram": self.ram_collector.get_ram_info(),
+            "sensors": self.sensor_collector.get_sensor_data(),
         }
 
         if is_android:

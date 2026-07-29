@@ -10,6 +10,8 @@ Termux-Doctor is a high-performance diagnostic suite designed specifically for t
 - **Telemetry Dashboard**: Monitor CPU, RAM, and Battery status in real-time.
 - **Network Deep-Dive**: DNS leak detection, latency analysis, and hotspot monitoring.
 - **Security Audit**: Root detection, SELinux status, and SUID anomaly scanning.
+- **Smart Sensor Hub**: Dynamic detection of hardware sensors (Accelerometer, Light, Gyroscope, Magnetometer, Hall IC). Automatically handles missing hardware.
+- **Tactile Alerts**: Haptic feedback integration for high-intensity sensor anomalies (e.g., strong magnetic fields), with toggleable settings.
 - **Extensible Architecture**: Easily add custom diagnostic services.
 
 ## Quick Start

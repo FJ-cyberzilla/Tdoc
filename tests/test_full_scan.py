@@ -15,11 +15,11 @@ def test_full_dashboard_scan():
     Verify that the dashboard action correctly orchestrates platform,
     network, and health services.
     """
-    mock_platform = MagicMock()
+    mock_platform = MagicMock(spec=["run"])
     mock_platform.run.return_value = {"os": "android"}
-    mock_network = MagicMock()
+    mock_network = MagicMock(spec=["run"])
     mock_network.run.return_value = {"status": "online"}
-    mock_health = MagicMock()
+    mock_health = MagicMock(spec=["run"])
     mock_health.run.return_value = {"battery": "healthy"}
 
     router = TDocRouter({"platform": mock_platform, "network": mock_network, "health": mock_health})

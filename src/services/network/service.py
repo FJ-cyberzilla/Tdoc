@@ -8,6 +8,8 @@ import urllib.request
 from typing import Any, NamedTuple
 
 from src.interfaces import DiagnosticService
+from src.services.network.sms import SMSChecker
+from src.services.network.wifi import WifiChecker
 from src.services.network_checkers import (
     DNSChecker,
     HotspotChecker,
@@ -38,6 +40,8 @@ class NetworkService(DiagnosticService):
             "telephony": TelephonyChecker(),
             "proxy": ProxyChecker(),
             "speed": NetworkSpeedChecker(),
+            "wifi": WifiChecker(),
+            "sms": SMSChecker(),
         }
 
     def run(self) -> dict[str, Any]:
@@ -47,11 +51,13 @@ class NetworkService(DiagnosticService):
             "topology": self._checkers["topology"].check(),
             "local_ip": self._get_local_ip(),
             "dns": self._checkers["dns"].check(),
-            "hotspot_active": self._checkers["hotspot"].check(),
+            "hotspot": self._checkers["hotspot"].check(),
             "vpn": self._checkers["vpn"].check(),
             "telephony": self._checkers["telephony"].check(),
             "proxy": self._checkers["proxy"].check(),
             "speed": self._checkers["speed"].check(),
+            "wifi": self._checkers["wifi"].check(),
+            "sms": self._checkers["sms"].check(),
             "mirror": {
                 "online": mirror.online,
                 "details": mirror.details,

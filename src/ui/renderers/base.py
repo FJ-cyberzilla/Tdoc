@@ -1,13 +1,20 @@
-from typing import Protocol
+"""
+Base protocols and interfaces for terminal UI renderers.
+"""
+
+from typing import Any, Protocol, runtime_checkable
 
 from rich.console import Console
 
 
+@runtime_checkable
 class BaseRenderer(Protocol):
-    """Protocol defining the interface for UI renderers."""
+    """Protocol defining the contract for all UI renderers."""
 
-    def __init__(self, console: Console): ...
+    console: Console
 
-    def render(self, *args, **kwargs):
-        """Renders the component."""
+    def __init__(self, console: Console) -> None: ...
+
+    def render(self, *args: Any, **kwargs: Any) -> None:
+        """Renders visual components directly to the console buffer."""
         ...

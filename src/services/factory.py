@@ -5,12 +5,14 @@ Service Factory
 from typing import Any
 
 from src.services.config import ConfigService
+from src.services.fetcher import TermuxSensorFetcher
 from src.services.health import HealthService
 from src.services.network import NetworkService
 from src.services.package_manager import PackageManagerService
 from src.services.persistence import PersistenceService
 from src.services.platform import PlatformService
 from src.services.security import SecurityService
+from src.services.sensor_hub import SensorHubService
 from src.services.updater import UpdaterService
 from src.services.utility import UtilityService
 
@@ -29,6 +31,7 @@ class ServiceFactory:
             "security": SecurityService(),
             "updater": UpdaterService(),
             "health": HealthService(),
+            "sensor_hub": SensorHubService(fetcher=TermuxSensorFetcher()),
             "package_manager": PackageManagerService(),
             "utility": UtilityService(),
         }

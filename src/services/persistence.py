@@ -8,7 +8,7 @@ for historical analysis.
 import json
 import os
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 class PersistenceService:
@@ -19,7 +19,7 @@ class PersistenceService:
         if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir)
 
-    def save_report(self, report_data: dict[str, Any], name: str = None):
+    def save_report(self, report_data: dict[str, Any], name: Optional[str] = None) -> str:
         """Persists a diagnostic report to JSON."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{name or 'report'}_{timestamp}.json"

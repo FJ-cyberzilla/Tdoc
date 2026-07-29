@@ -25,9 +25,9 @@ class CommandRunner:
             return ""
 
     @staticmethod
-    def parse_key_value(output: str, delimiter: str = ":") -> dict:
+    def parse_key_value(output: str, delimiter: str = ":") -> dict[str, str]:
         """Parses simple key-value pairs from command output."""
-        data = {}
+        data: dict[str, str] = {}
         for line in output.splitlines():
             if delimiter in line:
                 key, value = line.split(delimiter, 1)

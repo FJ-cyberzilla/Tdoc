@@ -2,6 +2,7 @@
 TDoc Security Subsystem – Hardened Privilege Audit
 """
 
+from typing import Any
 from src.interfaces import DiagnosticService
 from src.services.security_checkers import (
     EncryptionChecker,
@@ -17,8 +18,8 @@ from src.services.security_checkers import (
 class SecurityService(DiagnosticService):
     """Service to evaluate system security and privilege status."""
 
-    def __init__(self):
-        self._checkers = {
+    def __init__(self) -> None:
+        self._checkers: dict[str, Any] = {
             "root_presence": RootPresenceChecker(),
             "selinux": SELinuxStatusChecker(),
             "ld_preload": LDPreloadChecker(),
@@ -28,9 +29,9 @@ class SecurityService(DiagnosticService):
             "vulnerabilities": VulnerabilityChecker(),
         }
 
-    def run(self) -> dict:
+    def run(self) -> dict[str, Any]:
         """Executes host privilege security audit with real system inspection."""
-        results = {key: checker.check() for key, checker in self._checkers.items()}
+        results: dict[str, Any] = {key: checker.check() for key, checker in self._checkers.items()}
 
         # Transform results to match legacy API structure expected by UI
         return {

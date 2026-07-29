@@ -42,6 +42,8 @@ TDoc uses a comprehensive `Makefile` to orchestrate tasks. Available commands:
 - **Telemetry Dashboard**: Real-time monitoring of system metrics (CPU, RAM, Battery).
 - **Network Deep-Dive**: Connectivity checks, DNS leak detection, and hotspot monitoring.
 - **Security Audit**: Automated scanning for SUID anomalies, SELinux status, and root integrity.
+- **Smart Sensor Hub**: Automatically detects and queries supported device sensors (Accelerometer, Light, Gyroscope, Magnetometer, Hall IC). If a sensor is unavailable, it is gracefully marked as "NOT DETECTED" instead of returning invalid data.
+- **Tactile Alerts (Haptic Feedback)**: Provides vibration feedback for high-intensity sensor anomalies, such as significant magnetic field presence. This feature can be enabled/disabled programmatically via the SensorHubService instance.
 
 ## 3. Configuration
 TDoc supports customization via `config.json`.

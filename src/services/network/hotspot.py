@@ -1,4 +1,5 @@
 import subprocess
+from typing import Any
 
 
 class HotspotChecker:
@@ -6,12 +7,9 @@ class HotspotChecker:
     Checks if the device is currently acting as a hotspot.
     """
 
-    def check(self) -> bool:
+    def check(self) -> dict[str, Any]:
         """
-        Checks for active hotspot interfaces.
-
-        Returns:
-            bool: True if hotspot/tethering seems active.
+        Checks for active hotspot interfaces and returns status details.
         """
         try:
             res = subprocess.run(
@@ -19,8 +17,17 @@ class HotspotChecker:
             )
             if res.returncode == 0:
                 output = res.stdout.lower()
-                # ap0 for hotspot, rndis for USB tethering
-                return "ap0" in output or "rndis" in output
+
+                active = []
+                if "ap0" in output:
+                    active.append("Wi-Fi Hotspot")
+                if "rndis" in output:
+                    active.append("USB Tethering")
+
+                if active:
+                    return {"active": True, "type": ", ".join(active)}
+
+                return {"active": False, "type": "None"}
         except (subprocess.SubprocessError, OSError):
             pass
-        return False
+        return {"active": False, "type": "Error"}

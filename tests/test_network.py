@@ -6,7 +6,7 @@ proxy detection, timeout handling, and retry logic.
 """
 
 import os
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -87,12 +87,14 @@ def test_dns_resolution():
         assert "8.8.8.8" in results["servers"]
         assert results["status"] == "OK"
 
-    # Test resolv.conf fallback
-    m = mock_open(read_data="nameserver 1.1.1.1\n")
+    # Test resolv.conf fallback - DNSChecker uses getprop, not resolv.conf
+    # Updated to mock _get_dns_from_getprop
     with (
         patch("subprocess.run", return_value=MagicMock(returncode=1, stdout="")),
-        patch("os.path.exists", return_value=True),
-        patch("builtins.open", m),
+        patch(
+            "src.services.network.dns.DNSChecker._get_dns_from_getprop",
+            return_value=["1.1.1.1"],
+        ),
     ):
         results = checker.check()
         assert "1.1.1.1" in results["servers"]

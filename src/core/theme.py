@@ -7,11 +7,10 @@ punctuated by high-contrast semantic accents for zero-fatigue monitoring.
 from rich.console import Console
 from rich.theme import Theme
 
-# Safely import external config, but we will wrap it in our modern design system
-try:
-    from src.constants import RICH_THEME_CONFIG
-except ImportError:
-    RICH_THEME_CONFIG: dict[str, str] = {}
+import src.constants
+
+# Safely import external config, wrapped in our modern design system
+RICH_THEME_CONFIG: dict[str, str] = getattr(src.constants, "RICH_THEME_CONFIG", {})
 
 
 class ThemeManager:
@@ -20,9 +19,6 @@ class ThemeManager:
     Manages typography, semantic thresholds, and terminal capability graceful degradation.
     """
 
-    # ❖ THE GRAPHITE & PLASMA PALETTE (High-End Hex Colors)
-    # Using hex codes allows Rich to render true 24-bit color on modern terminals,
-    # while automatically degrading to 256-color palettes on older Termux setups.
     STYLES: dict[str, str] = {
         # --- Typography & Hierarchy ---
         "text.primary": RICH_THEME_CONFIG.get("text.primary", "#F8F9FA"),  # Pristine White
@@ -54,9 +50,6 @@ class ThemeManager:
     def __init__(self) -> None:
         """Initializes the layout engine and disables auto-highlighting for strict UI control."""
         self.theme = Theme(self.STYLES)
-
-        # highlight=False is CRITICAL for modern UIs. It stops Rich from
-        # arbitrarily turning numbers blue and brackets green.
         self.console = Console(theme=self.theme, highlight=False, soft_wrap=True)
 
     def get_status_style(
@@ -90,34 +83,37 @@ class ThemeManager:
             return "status.warning"
         return "status.success"
 
-    # =========================================================================
-    # ❖ RAW ANSI INJECTION (Minimalist 256-Color Mapping)
-    # For scripts or raw prints outside the Rich Console ecosystem.
-    # =========================================================================
+    def format_metric(
+        self, value: float, unit: str, warn: float, crit: float, reverse: bool = False
+    ) -> str:
+        """Helper to return a styled metric reading with unit."""
+        style = self.get_status_style(value, warn, crit, reverse=reverse)
+        return f"[{style}]{value}[/][hud.unit]{unit}[/]"
 
+    # --- RAW ANSI INJECTION (For direct terminal prints) ---
     @property
     def cyan(self) -> str:
-        return "\033[38;5;45m"  # Plasma Cyan
+        return "\033[38;5;45m"
 
     @property
     def slate(self) -> str:
-        return "\033[38;5;246m"  # Crisp Slate Gray
+        return "\033[38;5;246m"
 
     @property
     def muted(self) -> str:
-        return "\033[38;5;240m"  # Deep Ash (For borders/dividers)
+        return "\033[38;5;240m"
 
     @property
     def green(self) -> str:
-        return "\033[38;5;40m"  # Clean Emerald
+        return "\033[38;5;40m"
 
     @property
     def orange(self) -> str:
-        return "\033[38;5;214m"  # Warm Amber
+        return "\033[38;5;214m"
 
     @property
     def red(self) -> str:
-        return "\033[38;5;196m"  # Sharp Red
+        return "\033[38;5;196m"
 
     @property
     def reset(self) -> str:

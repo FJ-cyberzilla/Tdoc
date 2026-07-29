@@ -73,8 +73,8 @@ class RootPresenceChecker:
         Returns:
             tuple: (found_nonsetuid, errors, setuid_found_path)
         """
-        found_nonsetuid = []
-        errors = []
+        found_nonsetuid: list[str] = []
+        errors: list[str] = []
         for path in su_paths:
             found_setuid = self._check_single_su_path(path, found_nonsetuid, errors)
             if found_setuid:
@@ -103,6 +103,7 @@ class RootPresenceChecker:
             pass
         except Exception as e:
             raise SecurityError(f"Root check failed for {path}: {e}", context={"path": path}) from e
+        return None
 
     def _format_root_result(self, found_nonsetuid: list[str], errors: list[str]) -> dict[str, Any]:
         """Formats the scan results into a user-friendly dictionary."""
@@ -277,7 +278,7 @@ class SUIDBinaryChecker:
 
     def _scan_bin_dir(self, bin_dir: str) -> list[str]:
         """Iterates through the bin directory to find SUID/SGID files."""
-        suid_found = []
+        suid_found: list[str] = []
         try:
             for entry in os.scandir(bin_dir):
                 if entry.is_file(follow_symlinks=False):
