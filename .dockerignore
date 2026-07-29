@@ -1,0 +1,15 @@
+# Based on .gitignore
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+
+# Project-specific
+tests/
+docs/
+.venv/
+.git/
+.github/
+Makefile
+pyproject.toml
+uv.lock
