@@ -47,7 +47,7 @@ class NetworkService(DiagnosticService):
     def run(self) -> dict[str, Any]:
         """Executes network diagnostics inspecting routes, dynamic states, and mirror failovers."""
         mirror: MirrorResult = self._check_termux_mirrors()
-        
+
         return {
             "topology": self._checkers["topology"].check(),
             "local_ip": self._get_local_ip(),
@@ -74,7 +74,7 @@ class NetworkService(DiagnosticService):
                 s.connect(("8.8.8.8", 80))
                 local_ip: str = s.getsockname()[0]
                 return local_ip
-        except (OSError, socket.timeout):
+        except (TimeoutError, OSError):
             return "127.0.0.1"
 
     def _check_termux_mirrors(self) -> MirrorResult:

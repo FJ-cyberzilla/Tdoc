@@ -14,7 +14,7 @@ class OrientationAnalyzer(SensorAnalyzer):
 
         rates = gyro.get("values", [0.0, 0.0, 0.0])
         return self._evaluate_rotation(rates)
-    
+
     def _find_gyroscope(self, data: dict[str, Any]) -> Any:
         for key in data:
             if "Gyroscope" in key and "Uncalibrated" not in key:

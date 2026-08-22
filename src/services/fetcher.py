@@ -45,7 +45,7 @@ class TermuxSensorFetcher(SensorFetcher):
         if supported:
             actual_data = self._execute_sensor_command(supported)
             data.update(actual_data)
-        
+
         return data
 
     def _process_sensor_availability(self, sensors: list[str]) -> tuple[list[str], dict[str, Any]]:
@@ -82,7 +82,6 @@ class TermuxSensorFetcher(SensorFetcher):
 
     def _get_mock_data(self, sensors: list[str]) -> dict[str, Any]:
         """Generates realistic mock data for sensors."""
-        import random
         import time
 
         mock_data = {}
@@ -91,16 +90,40 @@ class TermuxSensorFetcher(SensorFetcher):
             mock_data[s] = {"values": self._get_sensor_mock_values(s, t)}
         return mock_data
 
+    def _get_accelerometer_mock(self, t: float) -> list[float]:
+        import random
+
+        return [random.uniform(-1, 1), random.uniform(-1, 1), 9.8 + random.uniform(-0.5, 0.5)]
+
+    def _get_light_mock(self, t: float) -> list[float]:
+        import random
+
+        return [200.0 + 50 * random.uniform(-1, 1)]
+
+    def _get_barometer_mock(self, t: float) -> list[float]:
+        import random
+
+        return [1010.0 + random.uniform(-2, 2)]
+
+    def _get_step_counter_mock(self, t: float) -> list[float]:
+        return [float(2500 + int(t % 100))]
+
+    def _get_gyroscope_mock(self, t: float) -> list[float]:
+        import random
+
+        return [random.uniform(-0.1, 0.1) for _ in range(3)]
+
     def _get_sensor_mock_values(self, s: str, t: float) -> list[float]:
         import random
-        if "Accelerometer" in s:
-            return [random.uniform(-1, 1), random.uniform(-1, 1), 9.8 + random.uniform(-0.5, 0.5)]
-        elif "Light" in s:
-            return [200.0 + 50 * random.uniform(-1, 1)]
-        elif "Barometer" in s:
-            return [1010.0 + random.uniform(-2, 2)]
-        elif "Step Counter" in s:
-            return [2500 + int(t % 100)]
-        elif "Gyroscope" in s:
-            return [random.uniform(-0.1, 0.1) for _ in range(3)]
+
+        generators = {
+            "Accelerometer": self._get_accelerometer_mock,
+            "Light": self._get_light_mock,
+            "Barometer": self._get_barometer_mock,
+            "Step Counter": self._get_step_counter_mock,
+            "Gyroscope": self._get_gyroscope_mock,
+        }
+        for key, generator in generators.items():
+            if key in s:
+                return generator(t)
         return [random.uniform(0, 100)]

@@ -42,15 +42,17 @@ class SMSChecker:
 
         for msg in messages:
             stats = self._process_message(msg)
-            total_sent += stats['sent']
-            total_recv += stats['recv']
-            if stats['sender']:
-                sender_freq[stats['sender']] += 1
-            if stats['hour'] is not None:
-                time_dist[stats['hour']] += 1
-            domain_freq.update(stats['domains'])
+            total_sent += stats["sent"]
+            total_recv += stats["recv"]
+            if stats["sender"]:
+                sender_freq[stats["sender"]] += 1
+            if stats["hour"] is not None:
+                time_dist[stats["hour"]] += 1
+            domain_freq.update(stats["domains"])
 
-        return self._summarize_analysis(len(messages), total_sent, total_recv, sender_freq, time_dist, domain_freq)
+        return self._summarize_analysis(
+            len(messages), total_sent, total_recv, sender_freq, time_dist, domain_freq
+        )
 
     def _empty_analysis(self) -> dict[str, Any]:
         return {
@@ -62,21 +64,30 @@ class SMSChecker:
             "domain_count": 0,
         }
 
-    def _summarize_analysis(self, total: int, sent: int, recv: int, 
-                            sender_freq: Counter[str], time_dist: Counter[int], 
-                            domain_freq: Counter[str]) -> dict[str, Any]:
+    def _calculate_diversity(self, sender_freq: Counter[str], total: int) -> float:
+        if not sender_freq or total == 0:
+            return 0.0
         entropy = 0.0
-        if sender_freq:
-            for count in sender_freq.values():
-                p = count / total
-                entropy -= p * math.log2(p)
-        
+        for count in sender_freq.values():
+            p = count / total
+            entropy -= p * math.log2(p)
+        return round(entropy, 2)
+
+    def _summarize_analysis(
+        self,
+        total: int,
+        sent: int,
+        recv: int,
+        sender_freq: Counter[str],
+        time_dist: Counter[int],
+        domain_freq: Counter[str],
+    ) -> dict[str, Any]:
         risky_domains = [d for d, c in domain_freq.items() if c > 2]
-        
+
         return {
             "total_messages": total,
             "sent_recv_ratio": f"{sent}/{recv}",
-            "sender_diversity": round(entropy, 2),
+            "sender_diversity": self._calculate_diversity(sender_freq, total),
             "peak_hour": time_dist.most_common(1)[0][0] if time_dist else "N/A",
             "risky_domains": risky_domains,
             "domain_count": len(domain_freq),
@@ -85,7 +96,7 @@ class SMSChecker:
     def _process_message(self, msg: dict[str, Any]) -> dict[str, Any]:
         sender = cast(str, msg.get("address", "Unknown"))
         body = cast(str, msg.get("body", ""))
-        
+
         sent = 1 if msg.get("type") == 2 else 0
         recv = 1 - sent
 
@@ -93,11 +104,11 @@ class SMSChecker:
         hour = datetime.fromtimestamp(ts / 1000.0).hour if isinstance(ts, (int, float)) else None
 
         return {
-            'sent': sent, 
-            'recv': recv, 
-            'sender': sender, 
-            'hour': hour, 
-            'domains': self._extract_domains(body)
+            "sent": sent,
+            "recv": recv,
+            "sender": sender,
+            "hour": hour,
+            "domains": self._extract_domains(body),
         }
 
     def _extract_domains(self, body: str) -> list[str]:

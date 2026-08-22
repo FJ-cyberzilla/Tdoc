@@ -9,9 +9,7 @@ class SensorCollector:
     def _list_sensors(self) -> list[str] | None:
         """Lists all sensors."""
         try:
-            res = subprocess.run(
-                ["termux-sensor", "-l"], capture_output=True, text=True, timeout=2
-            )
+            res = subprocess.run(["termux-sensor", "-l"], capture_output=True, text=True, timeout=2)
             if res.returncode != 0:
                 return None
             return json.loads(res.stdout).get("sensors", [])
@@ -33,14 +31,20 @@ class SensorCollector:
         except Exception:
             return None
 
+    def _is_relevant_sensor(self, sensor_name: str) -> bool:
+        relevant_keywords = ["Accelerometer", "Light", "Magnetometer", "Gyroscope"]
+        return any(keyword in sensor_name for keyword in relevant_keywords)
+
+    def _filter_target_sensors(self, sensors: list[str]) -> list[str]:
+        return [s for s in sensors if self._is_relevant_sensor(s)]
+
     def get_sensor_data(self) -> dict[str, Any]:
         """Queries device sensor data."""
         sensors = self._list_sensors()
         if sensors is None:
             return {"error": "Failed to list sensors"}
 
-        relevant_keywords = ["Accelerometer", "Light", "Magnetometer", "Gyroscope"]
-        target_sensors = [s for s in sensors if any(k in s for k in relevant_keywords)]
+        target_sensors = self._filter_target_sensors(sensors)
 
         if not target_sensors:
             return {"error": "No relevant sensors found"}
