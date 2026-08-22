@@ -12,4 +12,4 @@ def test_sensor_collector_timeout():
     with patch("subprocess.run", side_effect=side_effect):
         data = collector.get_sensor_data()
         assert "error" in data
-        assert data["error"] == "Sensor access error"
+        assert data["error"] == "Failed to list sensors"

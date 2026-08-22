@@ -40,18 +40,32 @@ class TermuxSensorFetcher(SensorFetcher):
         if not self.is_android:
             return self._get_mock_data(sensors)
 
+        supported, data = self._process_sensor_availability(sensors)
+
+        if supported:
+            actual_data = self._execute_sensor_command(supported)
+            data.update(actual_data)
+        
+        return data
+
+    def _process_sensor_availability(self, sensors: list[str]) -> tuple[list[str], dict[str, Any]]:
         available = self._get_available_sensors()
-        supported = [s for s in sensors if any(s in av for av in available)]
-        unsupported = [s for s in sensors if s not in supported]
+        supported = self._get_supported_sensors(sensors, available)
+        unsupported = self._get_unsupported_sensors(sensors, supported)
 
-        data = {}
-        # Mark unsupported sensors as 'NOT_DETECTED'
-        for s in unsupported:
-            data[s] = {"values": None, "status": "NOT_DETECTED"}
+        data = self._create_unsupported_data(unsupported)
+        return supported, data
 
-        if not supported:
-            return data
+    def _get_supported_sensors(self, sensors: list[str], available: list[str]) -> list[str]:
+        return [s for s in sensors if any(s in av for av in available)]
 
+    def _get_unsupported_sensors(self, sensors: list[str], supported: list[str]) -> list[str]:
+        return [s for s in sensors if s not in supported]
+
+    def _create_unsupported_data(self, unsupported: list[str]) -> dict[str, Any]:
+        return {s: {"values": None, "status": "NOT_DETECTED"} for s in unsupported}
+
+    def _execute_sensor_command(self, supported: list[str]) -> dict[str, Any]:
         try:
             sensor_str = ",".join(supported)
             res = subprocess.run(
@@ -61,11 +75,10 @@ class TermuxSensorFetcher(SensorFetcher):
                 timeout=5,
             )
             if res.returncode == 0 and res.stdout.strip():
-                actual_data = json.loads(res.stdout)
-                data.update(actual_data)
+                return json.loads(res.stdout)
         except Exception:
             pass
-        return data
+        return {}
 
     def _get_mock_data(self, sensors: list[str]) -> dict[str, Any]:
         """Generates realistic mock data for sensors."""
@@ -75,17 +88,19 @@ class TermuxSensorFetcher(SensorFetcher):
         mock_data = {}
         t = time.time()
         for s in sensors:
-            if "Accelerometer" in s:
-                v = [random.uniform(-1, 1), random.uniform(-1, 1), 9.8 + random.uniform(-0.5, 0.5)]
-                mock_data[s] = {"values": v}
-            elif "Light" in s:
-                mock_data[s] = {"values": [200.0 + 50 * random.uniform(-1, 1)]}
-            elif "Barometer" in s:
-                mock_data[s] = {"values": [1010.0 + random.uniform(-2, 2)]}
-            elif "Step Counter" in s:
-                mock_data[s] = {"values": [2500 + int(t % 100)]}
-            elif "Gyroscope" in s:
-                mock_data[s] = {"values": [random.uniform(-0.1, 0.1) for _ in range(3)]}
-            else:
-                mock_data[s] = {"values": [random.uniform(0, 100)]}
+            mock_data[s] = {"values": self._get_sensor_mock_values(s, t)}
         return mock_data
+
+    def _get_sensor_mock_values(self, s: str, t: float) -> list[float]:
+        import random
+        if "Accelerometer" in s:
+            return [random.uniform(-1, 1), random.uniform(-1, 1), 9.8 + random.uniform(-0.5, 0.5)]
+        elif "Light" in s:
+            return [200.0 + 50 * random.uniform(-1, 1)]
+        elif "Barometer" in s:
+            return [1010.0 + random.uniform(-2, 2)]
+        elif "Step Counter" in s:
+            return [2500 + int(t % 100)]
+        elif "Gyroscope" in s:
+            return [random.uniform(-0.1, 0.1) for _ in range(3)]
+        return [random.uniform(0, 100)]

@@ -47,6 +47,7 @@ class NetworkService(DiagnosticService):
     def run(self) -> dict[str, Any]:
         """Executes network diagnostics inspecting routes, dynamic states, and mirror failovers."""
         mirror: MirrorResult = self._check_termux_mirrors()
+        
         return {
             "topology": self._checkers["topology"].check(),
             "local_ip": self._get_local_ip(),
@@ -68,11 +69,12 @@ class NetworkService(DiagnosticService):
         """Finds the primary local IP address."""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.settimeout(1.0)
                 # Doesn't need to be reachable, just triggers routing logic
                 s.connect(("8.8.8.8", 80))
                 local_ip: str = s.getsockname()[0]
                 return local_ip
-        except OSError:
+        except (OSError, socket.timeout):
             return "127.0.0.1"
 
     def _check_termux_mirrors(self) -> MirrorResult:

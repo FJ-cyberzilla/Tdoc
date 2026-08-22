@@ -14,11 +14,14 @@ class EnvironmentAnalyzer(SensorAnalyzer):
         }
 
         for key, val in data.items():
-            if "Light" in key:
-                result["light"] = val.get("values", [50.0])[0]
-            if "Magnetometer" in key:
-                result["Magnetometer"] = val
-            if "Hall IC" in key:
-                result["Hall IC"] = val
+            self._update_result_with_sensor(result, key, val)
 
         return result
+
+    def _update_result_with_sensor(self, result: dict[str, Any], key: str, val: Any) -> None:
+        if "Light" in key:
+            result["light"] = val.get("values", [50.0])[0]
+        elif "Magnetometer" in key:
+            result["Magnetometer"] = val
+        elif "Hall IC" in key:
+            result["Hall IC"] = val
