@@ -2,11 +2,12 @@
 TDoc Router - Centralized Orchestration Layer.
 """
 
-import functools
+import asyncio
 from collections.abc import Callable
 from typing import Any
 
 from src.exceptions import RouterError, TDocError
+from src.interfaces import AsyncDiagnosticService
 
 
 class TDocRouter:
@@ -20,7 +21,7 @@ class TDocRouter:
             services: Dict mapping action/service names to service instances.
         """
         self.services: dict[str, dict[str, Any]] = {}
-        self.composite_actions: dict[str, Callable] = {}
+        self.composite_actions: dict[str, Callable[..., Any]] = {}
         self.middlewares: list[Any] = []
 
         if services:
@@ -31,7 +32,7 @@ class TDocRouter:
         """Registers a service (DiagnosticService or TelemetryService) with priority."""
         self.services[name] = {"service": service, "priority": priority}
 
-    def register_composite_action(self, name: str, action_func: Callable) -> None:
+    def register_composite_action(self, name: str, action_func: Callable[..., Any]) -> None:
         """Registers a new composite action handler."""
         self.composite_actions[name] = action_func
 
@@ -39,13 +40,16 @@ class TDocRouter:
         """Adds a middleware function to the routing execution pipeline."""
         self.middlewares.append(middleware_fn)
 
-    def route_action(self, action_id: str) -> Any:
+    async def route_action(self, action_id: str) -> Any:
         """
         Routes an action request to the registered service or composite action,
         applying all middleware layers in sequence.
         """
         if action_id in self.composite_actions:
-            return self.composite_actions[action_id](self)
+            result = self.composite_actions[action_id](self)
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
 
         service_entry = self.services.get(action_id)
         if not service_entry:
@@ -53,12 +57,14 @@ class TDocRouter:
 
         service = service_entry["service"]
 
-        def final_handler(aid: str) -> Any:
+        async def final_handler(aid: str) -> Any:
             try:
                 # Fulfill TelemetryService interface if available, else DiagnosticService
                 if hasattr(service, "get_telemetry"):
                     return service.get_telemetry()
                 elif hasattr(service, "run"):
+                    if isinstance(service, AsyncDiagnosticService):
+                        return await service.run()
                     return service.run()
                 else:
                     raise RouterError(
@@ -67,55 +73,64 @@ class TDocRouter:
             except TDocError:
                 raise
             except Exception as e:
+                print(f"DEBUG: Exception in final_handler for '{aid}': {e}")
                 raise RouterError(
                     f"Error executing action '{aid}': {e}", context={"original_error": str(e)}
                 ) from e
 
         # Build middleware pipeline bottom-up
         handler = final_handler
+        # Note: Middleware support for async needs careful implementation
         for middleware in reversed(self.middlewares):
             current_handler = handler
-            handler = functools.partial(
-                lambda aid, m, h: m(aid, h), m=middleware, h=current_handler
-            )
 
-        return handler(action_id)
+            async def wrapped_middleware(
+                aid: str, m: Any = middleware, h: Any = current_handler
+            ) -> Any:
+                res = m(aid, h)
+                if asyncio.iscoroutine(res):
+                    return await res
+                return res
+
+            handler = wrapped_middleware
+
+        return await handler(action_id)
 
     # =========================================================================
     # Telemetry Convenience Proxies (Used by UI Handlers)
     # =========================================================================
 
-    def get_environment_telemetry(self) -> dict[str, Any]:
+    async def get_environment_telemetry(self) -> dict[str, Any]:
         """Fetches CPU, RAM, and OS uptime telemetry."""
         try:
-            return self.route_action("environment")
+            return await self.route_action("environment")
         except RouterError:
             return {}
 
-    def get_health_telemetry(self) -> dict[str, Any]:
+    async def get_health_telemetry(self) -> dict[str, Any]:
         """Fetches battery, thermal, and storage telemetry."""
         try:
-            return self.route_action("health")
+            return await self.route_action("health")
         except RouterError:
             return {}
 
-    def get_network_telemetry(self) -> dict[str, Any]:
+    async def get_network_telemetry(self) -> dict[str, Any]:
         """Fetches DNS, VPN, and cellular telemetry."""
         try:
-            return self.route_action("network")
+            return await self.route_action("network")
         except RouterError:
             return {}
 
-    def get_security_telemetry(self) -> dict[str, Any]:
+    async def get_security_telemetry(self) -> dict[str, Any]:
         """Fetches Root, SELinux, and SUID audit telemetry."""
         try:
-            return self.route_action("security")
+            return await self.route_action("security")
         except RouterError:
             return {}
 
-    def get_sensor_hub_telemetry(self) -> dict[str, Any]:
+    async def get_sensor_hub_telemetry(self) -> dict[str, Any]:
         """Fetches modular sensor data and activity detection."""
         try:
-            return self.route_action("sensor_hub")
+            return await self.route_action("sensor_hub")
         except RouterError:
             return {}

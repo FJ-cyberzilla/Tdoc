@@ -2,6 +2,7 @@
 TDoc Platform Diagnostics - Main System Entry Gate
 """
 
+import asyncio
 import sys
 
 from src.exceptions import TDocError, UIError
@@ -28,7 +29,7 @@ def main():
     utility_service = services.get("utility")
     try:
         hud = HUDController(router, utility_service)
-        hud.start()
+        asyncio.run(hud.start())
     except (UIError, TDocError) as e:
         print(f"FATAL SYSTEM ERROR DURING APPLICATION RUNTIME: {e}")
         sys.exit(1)

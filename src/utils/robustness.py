@@ -4,28 +4,36 @@ Robustness Utilities.
 Provides decorators and tools for error recovery and transient failure management.
 """
 
+import asyncio
 import functools
-import time
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
+from typing import Any, TypeVar
+
+# Type alias for clarity
+FuncT = TypeVar("FuncT", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
-def retry(retries: int = 3, delay: int = 1, exceptions: tuple = (Exception,)):
+def retry(
+    retries: int = 3, delay: float = 1.0, exceptions: tuple[type[Exception], ...] = (Exception,)
+):
     """
-    Decorator to retry a function call on specific exceptions.
+    Decorator to retry an async function call on specific exceptions.
     """
 
-    def decorator(func: Callable):
+    def decorator(func: FuncT) -> FuncT:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            last_exception = None
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            last_exception: Exception | None = None
             for _attempt in range(retries):
                 try:
-                    return func(*args, **kwargs)
+                    return await func(*args, **kwargs)
                 except exceptions as e:
                     last_exception = e
-                    time.sleep(delay)
-            raise last_exception
+                    await asyncio.sleep(delay)
+            if last_exception:
+                raise last_exception
+            raise RuntimeError("Retry failed")
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return decorator

@@ -1,6 +1,5 @@
 import re
 import subprocess
-from typing import Any
 
 
 class DNSChecker:
@@ -8,27 +7,27 @@ class DNSChecker:
     Identifies active DNS servers by querying system properties and utilizing 'dig'.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> dict[str, object]:
         """
         Performs DNS detection. First tries 'dig' for actual resolution path,
         falls back to system properties.
         """
         # 1. Try 'dig' to see what server actually resolved the query
         server = self._get_dns_from_dig()
-        dns = [server] if server else []
+        dns: list[str] = [server] if server else []
 
         # 2. Fallback to system properties
         if not dns:
             dns = self._get_dns_from_getprop()
 
-        status = "OK" if dns else "FAILED: No DNS detected"
+        status: str = "OK" if dns else "FAILED: No DNS detected"
         return {"servers": list(set(dns)), "status": status}
 
     def _get_dns_from_dig(self) -> str | None:
         """Uses 'dig' to find the server that actually resolved a request."""
         try:
             # Run dig and parse the 'SERVER:' field
-            result = subprocess.run(
+            _ = subprocess.run(
                 ["dig", "+short", "google.com"],
                 capture_output=True,
                 text=True,
@@ -50,7 +49,7 @@ class DNSChecker:
 
     def _get_dns_from_getprop(self) -> list[str]:
         """Queries Android system properties for DNS settings."""
-        dns = []
+        dns: list[str] = []
         for i in range(1, 5):
             key = f"net.dns{i}"
             server = self._query_property(key)

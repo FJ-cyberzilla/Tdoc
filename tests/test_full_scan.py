@@ -5,12 +5,16 @@ This test suite verifies the end-to-end functionality of the TDocRouter
 when orchestrating multiple services for a dashboard request.
 """
 
+from typing import Any
 from unittest.mock import MagicMock
+
+import pytest
 
 from src.router import TDocRouter
 
 
-def test_full_dashboard_scan():
+@pytest.mark.asyncio
+async def test_full_dashboard_scan():
     """
     Verify that the dashboard action correctly orchestrates platform,
     network, and health services.
@@ -25,17 +29,17 @@ def test_full_dashboard_scan():
     router = TDocRouter({"platform": mock_platform, "network": mock_network, "health": mock_health})
 
     # Register dashboard composite action
-    router.register_composite_action(
-        "dashboard",
-        lambda r: {
-            "platform": r.route_action("platform"),
-            "network": r.route_action("network"),
-            "health": r.route_action("health"),
-        },
-    )
+    async def dashboard_action(r: TDocRouter) -> dict[str, Any]:
+        return {
+            "platform": await r.route_action("platform"),
+            "network": await r.route_action("network"),
+            "health": await r.route_action("health"),
+        }
+
+    router.register_composite_action("dashboard", dashboard_action)
 
     # The dashboard action in TDocRouter triggers calls to all three services
-    result = router.route_action("dashboard")
+    result = await router.route_action("dashboard")
 
     assert result["platform"] == {"os": "android"}
     assert result["network"] == {"status": "online"}

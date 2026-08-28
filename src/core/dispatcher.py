@@ -22,7 +22,7 @@ class CommandDispatcher:
         """Registers a command mapping."""
         self.action_map[choice] = (action_name, handler)
 
-    def dispatch(self, choice: str) -> Any:
+    async def dispatch(self, choice: str) -> Any:
         """Dispatches the chosen action."""
         if choice not in self.action_map:
             raise ValueError(f"Invalid operation token: {choice}")
@@ -32,5 +32,5 @@ class CommandDispatcher:
         if action_name in ["htop", "neofetch"]:
             return handler(None)
 
-        result = self.router.route_action(action_name)
-        return handler(result)
+        result = await self.router.route_action(action_name)
+        return await handler(result)

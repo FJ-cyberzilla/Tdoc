@@ -2,23 +2,26 @@
 TDoc Updater Subsystem - Workspace Integrity and Repository Synchronization
 """
 
+import asyncio
 import subprocess
 import sys
 import time
 from typing import Any
 
 from src.constants import ANSI_ORANGE, RESET
-from src.interfaces import DiagnosticService
+from src.interfaces import AsyncDiagnosticService
 
 
-class UpdaterService(DiagnosticService):
+class UpdaterService(AsyncDiagnosticService):
     """Service to evaluate workspace integrity and sync status."""
 
-    def run(self) -> dict[str, Any]:
+    async def run(self) -> dict[str, Any]:
         """Performs real-time validation of local git workspace and sync status."""
         git_status: str = "UNKNOWN"
         try:
-            res: subprocess.CompletedProcess = subprocess.run(
+            # Use to_thread to keep the event loop unblocked during subprocess call
+            res: subprocess.CompletedProcess[str] = await asyncio.to_thread(
+                subprocess.run,
                 ["git", "status", "--porcelain"],
                 capture_output=True,
                 text=True,
@@ -33,7 +36,7 @@ class UpdaterService(DiagnosticService):
 
         return {"git_status": git_status, "synced": True}
 
-    def _spin_progress(self, message: str, duration: float = 0.8) -> None:
+    async def _spin_progress(self, message: str, duration: float = 0.8) -> None:
         """Renders a smooth fluid terminal spinner animation during workspace checks."""
         frames: list[str] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
         end_time: float = time.time() + duration
@@ -41,7 +44,7 @@ class UpdaterService(DiagnosticService):
         while time.time() < end_time:
             sys.stdout.write(f"\r  {ANSI_ORANGE}{frames[i % len(frames)]}{RESET}  {message}")
             sys.stdout.flush()
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
             i += 1
         sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
         sys.stdout.flush()

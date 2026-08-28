@@ -55,7 +55,7 @@ class HUDController:
             "8", "sensor_hub", SensorHandler(self.renderer, self.router).handle
         )
 
-    def start(self):
+    async def start(self):
         """Runs the main UI interaction loop."""
         while True:
             self.renderer.clear_screen()
@@ -75,13 +75,13 @@ class HUDController:
                 self.theme.console.print("\n[status.success]Diagnostic pipeline closed safely.[/]")
                 break
 
-            self._handle_choice(choice)
+            await self._handle_choice(choice)
             self.theme.console.input("\n[text.muted]↵ Press Enter to return...[/]")
 
-    def _handle_choice(self, choice: str):
+    async def _handle_choice(self, choice: str):
         """Dispatches choices using the command dispatcher."""
         try:
-            self.dispatcher.dispatch(choice)
+            await self.dispatcher.dispatch(choice)
         except ValueError:
             self.theme.console.print("\n[error.text] ✘ Invalid operation token [/]")
         except TDocError as e:

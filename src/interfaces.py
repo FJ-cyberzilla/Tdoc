@@ -24,6 +24,15 @@ class DiagnosticService(Protocol):
 
 
 @runtime_checkable
+class AsyncDiagnosticService(Protocol):
+    """Protocol defining the interface for async diagnostic check and fix services."""
+
+    async def run(self) -> dict[str, Any]:
+        """Executes the diagnostic check or remediation script."""
+        ...
+
+
+@runtime_checkable
 class UtilityService(Protocol):
     """Protocol for external tool wrappers (e.g., htop, neofetch)."""
 

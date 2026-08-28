@@ -1,43 +1,55 @@
+import asyncio
 import re
 import subprocess
 import time
+from typing import Any
 
 
 class UptimeCollector:
     """Collects system uptime information."""
 
-    def get_uptime(self) -> str:
+    async def get_uptime(self) -> str:
         """Parses /proc/uptime for system uptime."""
         # 1. Try `uptime` command first
-        uptime_cmd = self._get_uptime_from_command()
+        uptime_cmd = await self._get_uptime_from_command()
         if uptime_cmd:
             return uptime_cmd
 
         # 2. Fallback to /proc/uptime
-        uptime_proc = self._get_uptime_from_proc()
+        uptime_proc = await self._get_uptime_from_proc()
         if uptime_proc:
             return uptime_proc
 
         # 3. Last effort fallback to uptime calculation
-        uptime_calc = self._get_uptime_from_calc()
+        uptime_calc = await self._get_uptime_from_calc()
         if uptime_calc:
             return uptime_calc
 
         return "Uptime unavailable"
 
-    def _get_uptime_from_command(self) -> str | None:
+    async def _get_uptime_from_command(self) -> str | None:
         try:
-            output: str = subprocess.check_output(["uptime"], text=True)
-            match = re.search(r"up\s+(.*?)(?:,|\s+user)", output)
+            res = await asyncio.to_thread(
+                subprocess.run,
+                ["uptime"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=1,
+            )
+            match = re.search(r"up\s+(.*?)(?:,|\s+user)", res.stdout)
             return match.group(1).strip() if match else None
         except Exception:
             return None
 
-    def _get_uptime_from_proc(self) -> str | None:
+    async def _get_uptime_from_proc(self) -> str | None:
         try:
-            with open("/proc/uptime") as f:
-                seconds: float = float(f.read().split()[0])
-                return self._format_seconds_to_uptime(seconds)
+            def _read_proc():
+                with open("/proc/uptime") as f:
+                    return float(f.read().split()[0])
+
+            seconds = await asyncio.to_thread(_read_proc)
+            return self._format_seconds_to_uptime(seconds)
         except Exception:
             return None
 
@@ -55,12 +67,17 @@ class UptimeCollector:
             parts.append(f"{minutes}m")
         return " ".join(parts) if parts else "Just started"
 
-    def _get_uptime_from_calc(self) -> str | None:
+    async def _get_uptime_from_calc(self) -> str | None:
         try:
-            boot_time = (
-                int(subprocess.check_output(["getprop", "ro.boottime.init"], text=True).strip())
-                / 1000
+            res = await asyncio.to_thread(
+                subprocess.run,
+                ["getprop", "ro.boottime.init"],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=1,
             )
+            boot_time = int(res.stdout.strip()) / 1000
             uptime_seconds = time.time() - boot_time
             hours = int(uptime_seconds // 3600)
             minutes = int((uptime_seconds % 3600) // 60)

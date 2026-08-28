@@ -20,7 +20,8 @@ from src.services.network_checkers import (
 )
 
 
-def test_connectivity_checks_and_retry_logic():
+@pytest.mark.asyncio
+async def test_connectivity_checks_and_retry_logic():
     """Test that NetworkService correctly checks mirrors and retries on failure."""
     service = NetworkService()
 
@@ -33,7 +34,7 @@ def test_connectivity_checks_and_retry_logic():
         # Case 1: First mirror works
         with patch("urllib.request.urlopen") as mock_url:
             mock_url.return_value.__enter__.return_value = MagicMock()
-            results = service.run()
+            results = await service.run()
             assert results["mirror"]["online"] is True
             assert results["mirror"]["details"] == "packages.termux.dev"
             assert mock_url.call_count == 1
@@ -42,7 +43,7 @@ def test_connectivity_checks_and_retry_logic():
         with patch("urllib.request.urlopen") as mock_url:
             # First call raises TimeoutError, second succeeds
             mock_url.side_effect = [TimeoutError(), MagicMock()]
-            results = service.run()
+            results = await service.run()
             assert results["mirror"]["online"] is True
             assert results["mirror"]["details"] == "packages.termux.org"
             assert mock_url.call_count == 2
@@ -50,7 +51,7 @@ def test_connectivity_checks_and_retry_logic():
         # Case 3: All mirrors fail
         with patch("urllib.request.urlopen") as mock_url:
             mock_url.side_effect = TimeoutError()
-            results = service.run()
+            results = await service.run()
             assert results["mirror"]["online"] is False
             assert "timed out" in results["mirror"]["details"]
             # It tries 4 mirrors

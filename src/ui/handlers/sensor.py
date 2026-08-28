@@ -2,54 +2,58 @@
 Sensor Hub Handler - Manages live sensor telemetry updates and history.
 """
 
-import time
+import asyncio
+from typing import Any
 
 from rich.live import Live
 
+from src.router import TDocRouter
+from src.ui.renderers.renderer import UIRenderer
 from src.ui.renderers.sensor_renderer import SensorRenderer
 
 
 class SensorHandler:
     """Handler for the Sensor Telemetry Hub view."""
 
-    def __init__(self, renderer, router):
+    def __init__(self, renderer: UIRenderer, router: TDocRouter) -> None:
         self.main_renderer = renderer  # UIRenderer
         self.router = router
         self.sensor_renderer = SensorRenderer(renderer.console)
-        self.history = {"accel_mag": [], "light": [], "pressure": []}
+        self.history: dict[str, list[float]] = {
+            "accel_mag": [],
+            "light": [],
+            "pressure": [],
+        }
         self.max_history = 50
 
-    def handle(self, *args, **kwargs):
+    async def handle(self, *args: Any, **kwargs: Any) -> None:
         """Runs the live sensor telemetry loop."""
         with Live(refresh_per_second=4, screen=True) as live:
-            try:
-                while True:
-                    # 1. Fetch sensor telemetry from router
-                    data = self.router.get_sensor_hub_telemetry()
+            while True:
+                # 1. Fetch sensor telemetry from router
+                data = await self.router.get_sensor_hub_telemetry()
 
-                    # 2. Update history for graphs
-                    self._update_history(data)
+                # 2. Update history for graphs
+                self._update_history(data)
 
-                    # 3. Render live view
-                    live.update(self.sensor_renderer.render_sensor_hub(data, self.history))
+                # 3. Render live view
+                live.update(self.sensor_renderer.render_sensor_hub(data, self.history))
 
-                    # Sampling rate
-                    time.sleep(0.2)
-            except KeyboardInterrupt:
-                pass
+                # Sampling rate
+                await asyncio.sleep(0.2)
 
-    def _update_history(self, data: dict):
+    def _update_history(self, data: dict[str, Any]) -> None:
         """Updates internal history buffers for sparklines."""
         # Activity magnitude
-        mag = data.get("activity", {}).get("magnitude", 0.0)
+        mag = float(data.get("activity", {}).get("magnitude", 0.0))
         self.history["accel_mag"].append(mag)
 
         # Light
-        light = data.get("environment", {}).get("light", 0.0)
+        light = float(data.get("environment", {}).get("light", 0.0))
         self.history["light"].append(light)
 
         # Pressure
-        pressure = data.get("environment", {}).get("pressure", 1013.25)
+        pressure = float(data.get("environment", {}).get("pressure", 1013.25))
         self.history["pressure"].append(pressure)
 
         # Trim history

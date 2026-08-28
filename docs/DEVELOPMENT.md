@@ -17,13 +17,13 @@ make run
 
 ## 2. Coding Standards
 - **Python**: Adhere to PEP 8. Use Google-style docstrings.
-- **Typing**: All parameters and return values must be explicitly typed (`mypy` compliant).
+- **Typing**: All parameters and return values must be explicitly typed (`mypy` compliant). Use `async`/`await` for all I/O bound tasks.
 - **Style**: Line length max 100 characters. Use MVC pattern for UI components.
 - **Linting/Formatting**: Use `make lint` for static analysis and `make format` for auto-formatting.
-- **Robustness**: Utilize `src/utils/robustness.py` for transient I/O operations.
+- **Robustness**: Utilize `src/utils/robustness.py` for transient I/O operations (supports `async`).
 
 ## 3. Testing & CI/CD
-- **Unit Tests**: All new features require tests in `tests/`.
+- **Unit Tests**: All new features require tests in `tests/`. Use `@pytest.mark.asyncio` for async tests.
 - **Execution**: Use `make test` to run the full suite (`pytest`).
 - **Coverage**: Maintain > 80% test coverage.
 - **CI**: GitHub Actions runs linting, type checking, and tests on push.
