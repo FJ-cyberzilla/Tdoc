@@ -1,20 +1,36 @@
 import subprocess
-from typing import Any
+from dataclasses import dataclass
+from enum import Enum, auto
 
+
+class NetworkFabric(Enum):
+    CELLULAR = auto()
+    WIFI = auto()
+    UNKNOWN = auto()
+
+@dataclass(frozen=True)
+class TopologyInfo:
+    wifi_active: bool
+    fabric: NetworkFabric
+    interface: str
 
 class RoutingTopologyChecker:
     """
     Analyzes the network routing table to determine active interfaces and fabric.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> TopologyInfo:
         """
         Analyzes the system routing table.
 
         Returns:
-            dict: Topology info (wifi_active, fabric, interface).
+            TopologyInfo: Topology info (wifi_active, fabric, interface).
         """
-        topo = {"wifi_active": False, "fabric": "CELLULAR", "interface": "NONE"}
+        topo = TopologyInfo(
+            wifi_active=False,
+            fabric=NetworkFabric.CELLULAR,
+            interface="NONE"
+        )
         try:
             res = subprocess.run(
                 ["ip", "route", "show"], capture_output=True, text=True, check=False, timeout=2
@@ -25,19 +41,18 @@ class RoutingTopologyChecker:
             pass
         return topo
 
-    def _parse_ip_route(self, output: str) -> dict[str, Any]:
+    def _parse_ip_route(self, output: str) -> TopologyInfo:
         """Parses the output of 'ip route show'."""
-        topo = {"wifi_active": False, "fabric": "CELLULAR", "interface": "NONE"}
+        wifi_active = False
+        fabric = NetworkFabric.CELLULAR
+        interface = "NONE"
+
         for line in output.splitlines():
             if "default" in line:
-                self._update_topology_from_line(topo, line)
+                if "wlan" in line:
+                    wifi_active = True
+                    fabric = NetworkFabric.WIFI
+                elif any(c in line for c in ["rmnet", "ccmni", "rndis", "p2p"]):
+                    fabric = NetworkFabric.CELLULAR
                 break
-        return topo
-
-    def _update_topology_from_line(self, topo: dict[str, Any], line: str):
-        """Updates topology dictionary based on a single route line."""
-        if "wlan" in line:
-            topo["wifi_active"] = True
-            topo["fabric"] = "WI-FI"
-        elif any(c in line for c in ["rmnet", "ccmni", "rndis", "p2p"]):
-            topo["fabric"] = "CELLULAR"
+        return TopologyInfo(wifi_active=wifi_active, fabric=fabric, interface=interface)

@@ -15,6 +15,12 @@ from src.services.security_checkers import (
     RootPresenceChecker,
     VulnerabilityChecker,
 )
+from src.services.security_models import (
+    EncryptionResult,
+    PermissionResult,
+    RootPresenceResult,
+    VulnerabilityResult,
+)
 
 
 def test_permission_checks():
@@ -26,8 +32,8 @@ def test_permission_checks():
         patch.dict(os.environ, {"PREFIX": "/tmp/prefix", "HOME": "/tmp/home"}),
     ):
         results = checker.check()
-        assert results["prefix_writable"] is True
-        assert results["home_writable"] is False
+        assert results.prefix_writable is True
+        assert results.home_writable is False
 
 
 def test_encryption_status():
@@ -38,15 +44,15 @@ def test_encryption_status():
     mock_res_enc = MagicMock(returncode=0, stdout="encrypted\n")
     with patch("subprocess.run", return_value=mock_res_enc):
         results = checker.check()
-        assert results["encrypted"] is True
-        assert results["state"] == "encrypted"
+        assert results.encrypted is True
+        assert results.state == "encrypted"
 
     # Case 2: Unencrypted
     mock_res_unenc = MagicMock(returncode=0, stdout="unencrypted\n")
     with patch("subprocess.run", return_value=mock_res_unenc):
         results = checker.check()
-        assert results["encrypted"] is False
-        assert results["state"] == "unencrypted"
+        assert results.encrypted is False
+        assert results.state == "unencrypted"
 
 
 def test_vulnerability_scanning():
@@ -64,8 +70,8 @@ def test_vulnerability_scanning():
 
     with patch("subprocess.run", side_effect=mock_query):
         results = checker.check()
-        assert results["debuggable"] is True
-        assert results["adb_enabled"] is True
+        assert results.debuggable is True
+        assert results.adb_enabled is True
 
 
 def test_root_presence_detection():
@@ -80,8 +86,8 @@ def test_root_presence_detection():
         patch("stat.S_ISREG", return_value=True),
     ):
         results = checker.check()
-        assert results["found"] is True
-        assert "DETECTED" in results["message"]
+        assert results.found is True
+        assert "DETECTED" in results.message
 
     # Case 2: su exists but no setuid bit
     mock_stat_no_suid = MagicMock()
@@ -91,8 +97,8 @@ def test_root_presence_detection():
         patch("stat.S_ISREG", return_value=True),
     ):
         results = checker.check()
-        assert results["found"] is False
-        assert "NO setuid bit" in results["message"]
+        assert results.found is False
+        assert "NO setuid bit" in results.message
 
 
 def test_security_service_aggregation():
@@ -100,13 +106,29 @@ def test_security_service_aggregation():
     service = SecurityService()
 
     with (
-        patch.object(RootPresenceChecker, "check", return_value={"found": False, "message": "OK"}),
-        patch.object(PermissionChecker, "check", return_value={"prefix_writable": True}),
-        patch.object(EncryptionChecker, "check", return_value={"encrypted": True}),
-        patch.object(VulnerabilityChecker, "check", return_value={"debuggable": False}),
+        patch.object(
+            RootPresenceChecker, "check", return_value=RootPresenceResult(found=False, message="OK")
+        ),
+        patch.object(
+            PermissionChecker,
+            "check",
+            return_value=PermissionResult(prefix_writable=True, home_writable=True, prefix=""),
+        ),
+        patch.object(
+            EncryptionChecker,
+            "check",
+            return_value=EncryptionResult(encrypted=True, state="encrypted", type=""),
+        ),
+        patch.object(
+            VulnerabilityChecker,
+            "check",
+            return_value=VulnerabilityResult(
+                debuggable=False, secure=True, adb_enabled=False
+            ),
+        ),
     ):
         results = service.run()
-        assert results["root_presence"]["found"] is False
-        assert results["permissions"]["prefix_writable"] is True
-        assert results["encryption"]["encrypted"] is True
-        assert results["vulnerabilities"]["debuggable"] is False
+        assert results.root_presence.found is False
+        assert results.permissions.prefix_writable is True
+        assert results.encryption.encrypted is True
+        assert results.vulnerabilities.debuggable is False

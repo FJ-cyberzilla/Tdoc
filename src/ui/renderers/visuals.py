@@ -2,31 +2,50 @@
 Visual elements, sparklines, and progress indicators for the Cybertronic UI.
 """
 
-from rich.table import Table
+from typing import Final
+
+
+class Grid:
+    """Wrapper for rich.table.Table to maintain type safety."""
+    def __init__(self, padding: tuple[int, int], expand: bool) -> None:
+        from rich.table import Table
+        self._table = Table.grid(padding=padding, expand=expand)
+
+    def add_column(
+        self,
+        style: str,
+        justify: str,
+        width: int,
+        no_wrap: bool = False,
+        overflow: str = "ellipsis",
+    ) -> None:
+        """Adds a column to the table."""
+        self._table.add_column(style=style, justify=justify, width=width, no_wrap=no_wrap, overflow=overflow)
 
 
 class GridBuilder:
     """Helper to build consistent, alignment-safe grids."""
 
     @staticmethod
-    def create_base_grid(label_width: int = 12) -> Table:
+    def create_base_grid(label_width: int = 12) -> Grid:
         """Creates a two-column grid with strict text bounds to prevent box overflow."""
-        grid = Table.grid(padding=(0, 1), expand=True)
+        grid = Grid(padding=(0, 1), expand=True)
         grid.add_column(style="hud.label", justify="right", width=label_width, no_wrap=True)
         grid.add_column(style="hud.value", overflow="ellipsis")
         return grid
 
 
-class Visualizer:
-    """Handles high-density visual element rendering."""
+class SparklineVisualizer:
+    """Handles braille sparkline rendering."""
 
     @staticmethod
-    def braille_sparkline(data: list[float], width: int = 10) -> str:
+    def render(data: list[float], width: int = 10) -> str:
         """Generates a Braille sparkline graph."""
         if not data:
             return "⠤" * width
 
-        min_v, max_v = min(data), max(data)
+        min_v: Final = min(data)
+        max_v: Final = max(data)
         if min_v == max_v:
             return "⠤" * width
 
@@ -34,11 +53,19 @@ class Visualizer:
         chars = ["⠤", "⠔", "⠒", "⠢"]
         return "".join([chars[v] for v in normalized[:width]])
 
+
+class StatusBadgeVisualizer:
+    """Handles status badge rendering."""
+
     @staticmethod
-    def render_state_badge(text: str, is_healthy: bool = True) -> str:
+    def render(text: str, is_healthy: bool = True) -> str:
         """Renders an inverted high-contrast status badge."""
         style = "[bold black on green]" if is_healthy else "[bold white on red]"
         return f"{style} ● {text.upper().strip()} [/]"
+
+
+class ProgressVisualizer:
+    """Handles progress bar rendering."""
 
     @staticmethod
     def render_capsule_bar(used: float, total: float, width: int = 10) -> str:
@@ -60,8 +87,12 @@ class Visualizer:
 
         return f"[{color}]{'█' * filled}[/{color}][dim]{'░' * empty}[/dim]"
 
+
+class HeatmapVisualizer:
+    """Handles density heatmap rendering."""
+
     @staticmethod
-    def render_gradient_heatmap(temp: float) -> str:
+    def render(temp: float) -> str:
         """Renders an ASCII density gradient heatmap based on temperature."""
         if temp < 35.0:
             return "[status.success]░░░░░░░░░░[/] [dim]Cool[/dim]"
@@ -72,8 +103,12 @@ class Visualizer:
         else:
             return "[status.critical]██████████[/] [bold red]CRITICAL[/bold red]"
 
+
+class PowerVisualizer:
+    """Handles power vector rendering."""
+
     @staticmethod
-    def render_power_vector(wattage: float) -> str:
+    def render(wattage: float) -> str:
         """Renders power vector with directionality."""
         if wattage > 0.05:
             return f"[cyan]▲ +{wattage:.1f} W[/cyan]"

@@ -13,12 +13,12 @@ def test_activity_analyzer():
     # Stationary
     data = {"Accelerometer": {"values": [0, 0, 9.8]}}
     res = analyzer.analyze(data)
-    assert res["status"] == "STATIONARY"
+    assert res.status == "STATIONARY"
 
     # Running
     data = {"Accelerometer": {"values": [10, 10, 10]}}
     res = analyzer.analyze(data)
-    assert res["status"] == "RUNNING"
+    assert res.status == "RUNNING"
 
 
 def test_environment_analyzer():
@@ -29,9 +29,11 @@ def test_environment_analyzer():
         "Light": {"values": [300.0]},
     }
     res = analyzer.analyze(data)
-    assert res["Magnetometer"]["values"] == [1.0, 2.0, 3.0]
-    assert res["Hall IC"]["values"] == [0.0]
-    assert res["light"] == 300.0
+    assert res.magnetometer is not None
+    assert res.magnetometer.values == [1.0, 2.0, 3.0]
+    assert res.hall_ic is not None
+    assert res.hall_ic.values == [0.0]
+    assert res.light == 300.0
 
 
 def test_orientation_analyzer():
@@ -40,9 +42,9 @@ def test_orientation_analyzer():
     # Stable
     data = {"Gyroscope": {"values": [0.1, 0.1, 0.1]}}
     res = analyzer.analyze(data)
-    assert res["status"] == "STABLE"
+    assert res.status == "STABLE"
 
     # Rotating
     data = {"Gyroscope": {"values": [1.0, 0.1, 0.1]}}
     res = analyzer.analyze(data)
-    assert res["status"] == "ROTATING"
+    assert res.status == "ROTATING"

@@ -1,6 +1,7 @@
-from typing import Any
+from typing import cast
 
 from src.interfaces import SensorAnalyzer
+from src.services.sensor_models import ActivityResult
 
 
 class ActivityAnalyzer(SensorAnalyzer):
@@ -16,15 +17,16 @@ class ActivityAnalyzer(SensorAnalyzer):
             return "TILTED"
         return "STATIONARY"
 
-    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
+    def analyze(self, data: dict[str, object]) -> ActivityResult:
         accel = next((data[key] for key in data if "Accelerometer" in key), None)
 
-        if not accel:
-            return {"status": "Unknown", "magnitude": 0.0}
+        if not isinstance(accel, dict):
+            return ActivityResult(status="Unknown", magnitude=0.0, values=[0.0, 0.0, 0.0])
 
         # Calculate magnitude of acceleration
-        x, y, z = accel.get("values", [0.0, 0.0, 0.0])
+        vals = cast(list[float], accel.get("values", [0.0, 0.0, 0.0]))
+        x, y, z = vals
         mag = (x**2 + y**2 + z**2) ** 0.5
 
         status = self._determine_activity(mag)
-        return {"status": status, "magnitude": mag, "values": [x, y, z]}
+        return ActivityResult(status=status, magnitude=mag, values=[x, y, z])

@@ -14,20 +14,36 @@ Example usage:
 import os
 import stat
 import subprocess
-from typing import Any, Protocol
+from typing import Protocol
 
 from src.exceptions import SecurityError
+from src.services.security_models import (
+    EncryptionResult,
+    LDPreloadResult,
+    PermissionResult,
+    RootPresenceResult,
+    SELinuxResult,
+    SUIDBinaryResult,
+    VulnerabilityResult,
+)
 
 
 class SecurityChecker(Protocol):
     """Protocol defining the interface for security checker classes."""
 
-    def check(self) -> dict[str, Any]:
+    def check(
+        self,
+    ) -> (
+        RootPresenceResult
+        | SELinuxResult
+        | LDPreloadResult
+        | SUIDBinaryResult
+        | PermissionResult
+        | EncryptionResult
+        | VulnerabilityResult
+    ):
         """
         Performs a security check and returns result data.
-
-        Returns:
-            dict[str, Any]: A dictionary containing the results of the check.
         """
         ...
 
@@ -40,12 +56,12 @@ class RootPresenceChecker:
      the setuid bit set, which typically indicates a rooted device.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> RootPresenceResult:
         """
         Executes the root presence check.
 
         Returns:
-            dict[str, Any]: Dictionary with 'found' (bool) and 'message' (str).
+            RootPresenceResult: Object with 'found' (bool) and 'message' (str).
         """
         su_paths = [
             "/system/bin/su",
@@ -59,7 +75,8 @@ class RootPresenceChecker:
         found_nonsetuid, errors, setuid_found = self._scan_su_paths(su_paths)
 
         if setuid_found:
-            return {"found": True, "message": f"DETECTED – setuid root at {setuid_found}"}
+            msg = f"DETECTED – setuid root at {setuid_found}"
+            return RootPresenceResult(found=True, message=msg)
 
         return self._format_root_result(found_nonsetuid, errors)
 
@@ -105,16 +122,18 @@ class RootPresenceChecker:
             raise SecurityError(f"Root check failed for {path}: {e}", context={"path": path}) from e
         return None
 
-    def _format_root_result(self, found_nonsetuid: list[str], errors: list[str]) -> dict[str, Any]:
-        """Formats the scan results into a user-friendly dictionary."""
+    def _format_root_result(
+        self, found_nonsetuid: list[str], errors: list[str]
+    ) -> RootPresenceResult:
+        """Formats the scan results into a user-friendly RootPresenceResult."""
         if found_nonsetuid:
-            return {
-                "found": False,
-                "message": f"Found but NO setuid bit: {', '.join(found_nonsetuid)}",
-            }
+            message = f"Detected non-suid potential binaries: {', '.join(found_nonsetuid)}"
+            return RootPresenceResult(found=False, message=message)
         if errors:
-            return {"found": False, "message": f"Could not read all paths: {'; '.join(errors)}"}
-        return {"found": False, "message": "PRISTINE (No su binary found)"}
+            msg = f"Could not read all paths: {'; '.join(errors)}"
+            return RootPresenceResult(found=False, message=msg)
+        return RootPresenceResult(found=False, message="PRISTINE (No su binary found)")
+
 
 
 class SELinuxStatusChecker:
@@ -125,14 +144,14 @@ class SELinuxStatusChecker:
     and checking mount points.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> SELinuxResult:
         """
         Retrieves the SELinux status.
 
         Returns:
-            dict[str, Any]: Dictionary with 'status' (str).
+            SELinuxResult: Object with 'status' (str).
         """
-        return {"status": self._get_status()}
+        return SELinuxResult(status=self._get_status())
 
     def _get_status(self) -> str:
         """Orchestrates different SELinux detection methods."""
@@ -199,19 +218,19 @@ class LDPreloadChecker:
     This checker identifies trusted Termux libraries vs external ones.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> LDPreloadResult:
         """
         Analyzes the LD_PRELOAD environment variable.
 
         Returns:
-            dict[str, Any]: Dictionary with 'active' (bool) and 'message' (str).
+            LDPreloadResult: Object with 'active' (bool) and 'message' (str).
         """
         preload = os.environ.get("LD_PRELOAD", "").strip()
         if not preload:
-            return {"active": False, "message": "INACTIVE (No preloaded injection vectors)"}
+            return LDPreloadResult(active=False, message="INACTIVE (No injection vectors)")
 
         trusted, external = self._analyze_preload_vectors(preload)
-        return {"active": True, "message": self._build_message(trusted, external)}
+        return LDPreloadResult(active=True, message=self._build_message(trusted, external))
 
     def _analyze_preload_vectors(self, preload: str) -> tuple[list[str], list[str]]:
         """
@@ -254,21 +273,22 @@ class SUIDBinaryChecker:
     Unexpected SUID binaries in the user's bin directory can be a security risk.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> SUIDBinaryResult:
         """
         Performs the SUID/SGID scan.
 
         Returns:
-            dict[str, Any]: Dictionary with 'message' (str).
+            SUIDBinaryResult: Object with 'message' (str).
         """
         bin_dir = self._get_bin_dir()
         if not bin_dir:
-            return {"message": "PREFIX/bin not found"}
+            return SUIDBinaryResult(message="PREFIX/bin not found")
 
         suid_found = self._scan_bin_dir(bin_dir)
         if suid_found:
-            return {"message": f"WARNING – SUID/SGID binaries found: {', '.join(suid_found)}"}
-        return {"message": "Pristine (No local SUID anomalies)"}
+            msg = f"WARNING – SUID/SGID binaries found: {', '.join(suid_found)}"
+            return SUIDBinaryResult(message=msg)
+        return SUIDBinaryResult(message="Pristine (No local SUID anomalies)")
 
     def _get_bin_dir(self) -> str | None:
         """Determines the path to the Termux binary directory."""
@@ -280,14 +300,15 @@ class SUIDBinaryChecker:
         """Iterates through the bin directory to find SUID/SGID files."""
         suid_found: list[str] = []
         try:
-            for entry in os.scandir(bin_dir):
-                if entry.is_file(follow_symlinks=False):
-                    self._check_file_suid(entry, suid_found)
+            with os.scandir(bin_dir) as it:
+                for entry in it:
+                    if entry.is_file(follow_symlinks=False):
+                        self._check_file_suid(entry, suid_found)
         except PermissionError:
             pass
         return suid_found
 
-    def _check_file_suid(self, entry: os.DirEntry, suid_found: list[str]):
+    def _check_file_suid(self, entry: os.DirEntry[str], suid_found: list[str]) -> None:
         """Checks a single file for SUID or SGID bits."""
         try:
             st = entry.stat()
@@ -303,17 +324,17 @@ class PermissionChecker:
     Checks for sensitive directory permissions.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> PermissionResult:
         """
         Checks if critical directories have expected permissions.
         """
         prefix = os.environ.get("PREFIX", "/data/data/com.termux/files/usr")
         home = os.environ.get("HOME", "/data/data/com.termux/files/home")
-        return {
-            "prefix_writable": os.access(prefix, os.W_OK),
-            "home_writable": os.access(home, os.W_OK),
-            "prefix": prefix,
-        }
+        return PermissionResult(
+            prefix_writable=os.access(prefix, os.W_OK),
+            home_writable=os.access(home, os.W_OK),
+            prefix=prefix,
+        )
 
 
 class EncryptionChecker:
@@ -321,20 +342,17 @@ class EncryptionChecker:
     Checks the device's encryption status via system properties.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> EncryptionResult:
         """
         Retrieves ro.crypto.state and ro.crypto.type.
         """
-        results = {"encrypted": False, "state": "unknown", "type": "unknown"}
-        try:
-            state = self._query_prop("ro.crypto.state")
-            crypto_type = self._query_prop("ro.crypto.type")
-            results["state"] = state or "unknown"
-            results["type"] = crypto_type or "unknown"
-            results["encrypted"] = state == "encrypted"
-        except Exception:
-            pass
-        return results
+        state = self._query_prop("ro.crypto.state")
+        crypto_type = self._query_prop("ro.crypto.type")
+        return EncryptionResult(
+            encrypted=(state == "encrypted"),
+            state=state or "unknown",
+            type=crypto_type or "unknown",
+        )
 
     def _query_prop(self, key: str) -> str | None:
         try:
@@ -349,15 +367,15 @@ class VulnerabilityChecker:
     Checks for common Android vulnerability indicators like debuggable builds or ADB status.
     """
 
-    def check(self) -> dict[str, Any]:
+    def check(self) -> VulnerabilityResult:
         """
         Evaluates debuggable status and other risky properties.
         """
-        return {
-            "debuggable": self._query_prop("ro.debuggable") == "1",
-            "secure": self._query_prop("ro.secure") == "1",
-            "adb_enabled": self._query_prop("init.svc.adbd") == "running",
-        }
+        return VulnerabilityResult(
+            debuggable=self._query_prop("ro.debuggable") == "1",
+            secure=self._query_prop("ro.secure") == "1",
+            adb_enabled=self._query_prop("init.svc.adbd") == "running",
+        )
 
     def _query_prop(self, key: str) -> str | None:
         try:

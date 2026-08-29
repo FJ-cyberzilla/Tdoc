@@ -13,49 +13,32 @@ class SecurityAuditModel:
     ld_preload: str = "Clean"
     suid_anomalies: int = 0
 
+    @staticmethod
+    def _get_safe_message(data: object, key: str, default: str) -> str:
+        if isinstance(data, dict):
+            # Safe because we verified it's a dict
+            return str(cast(dict[str, object], data).get(key, default))
+        return str(data)
+
+    @staticmethod
+    def _get_safe_int(value: object, default: int) -> int:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                pass
+        return default
+
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> "SecurityAuditModel":
         if not isinstance(data, dict):
             return cls()
 
-        root_info: object = data.get("root_presence", {})
-
-        # Ensure root_info is handled safely
-        root_msg: str
-        if isinstance(root_info, dict):
-            # Casting to dict[str, object] because we checked it's a dict
-            root_dict = cast(dict[str, object], root_info)
-            root_msg = str(root_dict.get("message", "Unknown"))
-        else:
-            root_msg = str(root_info)
-
-        ld_info: object = data.get("ld_preload", {})
-
-        # Ensure ld_info is handled safely
-        ld_msg: str
-        if isinstance(ld_info, dict):
-            # Casting to dict[str, object] because we checked it's a dict
-            ld_dict = cast(dict[str, object], ld_info)
-            ld_msg = str(ld_dict.get("message", "Clean"))
-        else:
-            ld_msg = str(ld_info)
-
-        selinux_val = data.get("selinux", "Enforcing")
-
-        # Handle potential suid_anomalies
-        suid_val = data.get("termux_suid", 0)
-        suid_int: int = 0
-        if isinstance(suid_val, int):
-            suid_int = suid_val
-        elif isinstance(suid_val, str):
-            try:
-                suid_int = int(suid_val)
-            except ValueError:
-                suid_int = 0
-
         return cls(
-            root_state=root_msg,
-            selinux=str(selinux_val),
-            ld_preload=ld_msg,
-            suid_anomalies=suid_int,
+            root_state=cls._get_safe_message(data.get("root_presence", {}), "message", "Unknown"),
+            selinux=str(data.get("selinux", "Enforcing")),
+            ld_preload=cls._get_safe_message(data.get("ld_preload", {}), "message", "Clean"),
+            suid_anomalies=cls._get_safe_int(data.get("termux_suid", 0), 0),
         )

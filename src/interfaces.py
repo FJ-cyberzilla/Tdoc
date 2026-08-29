@@ -50,7 +50,7 @@ class SensorFetcher(Protocol):
         """Returns True if the fetcher supports biometric checks."""
         ...
 
-    def get_data(self, sensors: list[str]) -> dict[str, Any]:
+    def get_data(self, sensors: list[str]) -> dict[str, object]:
         """Fetches data from the specified sensors."""
         ...
 
@@ -59,6 +59,6 @@ class SensorFetcher(Protocol):
 class SensorAnalyzer(Protocol):
     """Protocol for analyzing sensor data."""
 
-    def analyze(self, data: dict[str, Any]) -> dict[str, Any]:
+    def analyze(self, data: dict[str, object]) -> object:
         """Analyzes sensor data and returns insights."""
         ...

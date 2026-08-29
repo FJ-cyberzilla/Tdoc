@@ -42,9 +42,9 @@ class EnvironmentService:
         }
 
         if is_android:
-            results.update(self.system_collector.get_android_environment())
+            results["environment"] = self.system_collector.get_android_environment()
         else:
-            results.update(self.system_collector.get_generic_environment())
+            results["environment"] = self.system_collector.get_generic_environment()
 
         results["lang"] = os.environ.get("LANG", "en_US.UTF-8")
         results["api_connected"] = bool(shutil.which("termux-battery-status"))

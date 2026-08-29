@@ -2,7 +2,6 @@ import asyncio
 import re
 import subprocess
 import time
-from typing import Any
 
 
 class UptimeCollector:

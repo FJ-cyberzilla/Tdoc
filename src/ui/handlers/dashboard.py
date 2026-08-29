@@ -6,6 +6,8 @@ from typing import Any
 from rich.live import Live
 
 from src.router import TDocRouter
+from src.ui.models.hardware import HardwareTelemetry
+from src.ui.models.network import NetworkTelemetry
 from src.ui.renderers.renderer import UIRenderer
 
 
@@ -25,10 +27,13 @@ class DashboardHandler:
                     self.router.get_network_telemetry(),
                 )
 
+                hardware = HardwareTelemetry.from_dict(env_raw, health_raw)
+                network = NetworkTelemetry.from_dict(net_raw)
+
                 # 2. Render live
                 live.update(
                     self.renderer.render_dashboard(
-                        env_data=env_raw, net_data=net_raw, health_data=health_raw
+                        hardware=hardware, net_data=network
                     )
                 )
                 await asyncio.sleep(2)

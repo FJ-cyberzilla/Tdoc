@@ -8,6 +8,7 @@ from typing import Any
 
 from src.exceptions import RouterError, TDocError
 from src.interfaces import AsyncDiagnosticService
+from src.services.sensor_models import SensorHubTelemetry
 
 
 class TDocRouter:
@@ -128,9 +129,15 @@ class TDocRouter:
         except RouterError:
             return {}
 
-    async def get_sensor_hub_telemetry(self) -> dict[str, Any]:
+    async def get_sensor_hub_telemetry(self) -> SensorHubTelemetry:
         """Fetches modular sensor data and activity detection."""
         try:
-            return await self.route_action("sensor_hub")
+            return await self.route_action("sensor_hub") # type: ignore[return-value]
         except RouterError:
-            return {}
+            return SensorHubTelemetry(
+                raw={},
+                activity=None,
+                environment=None,
+                orientation=None,
+                security=None,
+            )

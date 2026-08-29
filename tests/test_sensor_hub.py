@@ -23,13 +23,11 @@ def test_sensor_hub_integration():
 
     results = service.run()
 
-    assert "activity" in results
-    assert results["activity"]["status"] == "STATIONARY"
-    assert "environment" in results
-    assert results["environment"]["Magnetometer"]["values"] == [1, 2, 3]
-    assert results["environment"]["Hall IC"]["values"] == [0]
-    assert "orientation" in results  # Ensure new analyzer is integrated
-    assert "raw" in results
+    assert results.activity.status == "STATIONARY"
+    assert results.environment.magnetometer.values == [1, 2, 3]
+    assert results.environment.hall_ic.values == [0]
+    assert results.orientation is not None
+    assert results.raw is not None
 
 
 def test_security_status():
@@ -39,5 +37,5 @@ def test_security_status():
     # Depending on the test environment, this might be SECURE or VULNERABLE
     # We just want to ensure it doesn't crash
     status = service.get_security_status()
-    assert "biometric_available" in status
-    assert "lock_state" in status
+    assert isinstance(status.biometric_available, bool)
+    assert isinstance(status.lock_state, str)

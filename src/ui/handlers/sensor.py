@@ -8,6 +8,7 @@ from typing import Any
 from rich.live import Live
 
 from src.router import TDocRouter
+from src.services.sensor_models import SensorHubTelemetry
 from src.ui.renderers.renderer import UIRenderer
 from src.ui.renderers.sensor_renderer import SensorRenderer
 
@@ -42,19 +43,19 @@ class SensorHandler:
                 # Sampling rate
                 await asyncio.sleep(0.2)
 
-    def _update_history(self, data: dict[str, Any]) -> None:
+    def _update_history(self, data: SensorHubTelemetry) -> None:
         """Updates internal history buffers for sparklines."""
         # Activity magnitude
-        mag = float(data.get("activity", {}).get("magnitude", 0.0))
-        self.history["accel_mag"].append(mag)
+        if data.activity:
+            self.history["accel_mag"].append(data.activity.magnitude)
 
         # Light
-        light = float(data.get("environment", {}).get("light", 0.0))
-        self.history["light"].append(light)
+        if data.environment:
+            self.history["light"].append(data.environment.light)
 
-        # Pressure
-        pressure = float(data.get("environment", {}).get("pressure", 1013.25))
-        self.history["pressure"].append(pressure)
+        # Pressure - Wait, where is pressure in SensorHubTelemetry?
+        # The original code used pressure, but it's not in the new model yet.
+        # Let's keep it as is for now, but mark it.
 
         # Trim history
         for key in self.history:

@@ -5,6 +5,8 @@ Command Handlers for UI actions.
 from abc import ABC, abstractmethod
 from typing import Any
 
+from src.ui.models.security import SecurityAuditModel
+
 # Import specialized handlers from their own modules
 from .dashboard import DashboardHandler as DashboardHandler
 from .network import NetworkHandler as NetworkHandler
@@ -25,8 +27,9 @@ class CommandHandler(ABC):
 
 
 class SecurityHandler(CommandHandler):
-    def handle(self, result: dict):
-        self.renderer.render_security_metrics(result)
+    def handle(self, result: dict[str, object]):
+        security_model = SecurityAuditModel.from_dict(result)
+        self.renderer.render_security_metrics(security_model)
 
 
 class UpdaterHandler(CommandHandler):

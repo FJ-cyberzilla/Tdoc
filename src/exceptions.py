@@ -5,7 +5,7 @@ Defines a hierarchy of custom exceptions to provide structured error reporting,
 contextual metadata, and simplified error recovery across the application.
 """
 
-from typing import Any
+from typing import Union
 
 
 class TDocError(Exception):
@@ -14,10 +14,14 @@ class TDocError(Exception):
 
     Attributes:
         message (str): A human-readable explanation of the error.
-        context (dict[str, Any]): Additional diagnostic data related to the failure.
+        context (dict[str, Union[str, int, float, bool, None]]): Additional diagnostic data related to the failure.
     """
 
-    def __init__(self, message: str, context: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        context: dict[str, Union[str, int, float, bool, None]] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.context = context or {}
