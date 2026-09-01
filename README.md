@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-5.4.9-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
-Termux-Doctor is a high-performance diagnostic suite designed specifically for the Termux ecosystem. It provides advanced system integrity diagnostics, real-time telemetry, and automated security auditing in a unified control HUD.[![pages-build-deployment](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment)[![CodeQL Advanced](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/codeql.yml)
+Termux-Doctor is a high-performance diagnostic suite designed specifically for the Termux ecosystem. It provides advanced system integrity diagnostics, real-time telemetry, and automated security auditing in a unified control HUD.[![pages-build-deployment](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/pages/pages-build-deployment)[![CodeQL Advanced](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/codeql.yml)[![ci](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/build.yml/badge.svg)](https://github.com/FJ-cyberzilla/Tdoc/actions/workflows/build.yml)
 
 ## Features
 - **Telemetry Dashboard**: Monitor CPU, RAM, and Battery status in real-time.
