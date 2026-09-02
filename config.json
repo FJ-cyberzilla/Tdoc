@@ -1,0 +1,9 @@
+{
+    "check_thresholds": {
+        "battery_low": 20,
+        "storage_warning": 10
+    },
+    "ui_settings": {
+        "theme": "default"
+    }
+}

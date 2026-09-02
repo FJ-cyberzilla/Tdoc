@@ -1,32 +1,25 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+# Binaries
+tdoc
+bin/
+
+# Go
+/vendor/
+*.exe
+*.dll
 *.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-env.bak/
-venv.bak/
+*.dylib
+*.test
+*.out
+*.prof
 
 # Project Directories
 reports/
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
 build/
 dist/
-*.egg-info/
 
 # Misc
 .env
 .envrc
 .vscode/
 .idea/
-hotfix.sh
-config.json
-fix.txt
-PLAN.md
-GEMINI.md
+.DS_Store

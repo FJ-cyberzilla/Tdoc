@@ -34,6 +34,9 @@ func TestGetNetworkData(t *testing.T) {
 		if data.Netstat != "tcp 0 0 ..." {
 			t.Errorf("expected netstat 'tcp 0 0 ...', got '%s'", data.Netstat)
 		}
+		if data.DNS == nil {
+			t.Errorf("expected DNS to be set, got nil")
+		}
 	})
 
 	t.Run("CommandError", func(t *testing.T) {

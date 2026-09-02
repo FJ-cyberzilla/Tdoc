@@ -1,6 +1,6 @@
-# Termux-Doctor (TDoc)
+# Termux-Doctor
 
-[![Version](https://img.shields.io/badge/version-5.4.9-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 Termux-Doctor is a high-performance diagnostic suite designed specifically for the Termux ecosystem. It provides advanced system integrity diagnostics, real-time telemetry, and automated security auditing in a unified control HUD.
@@ -16,8 +16,8 @@ Termux-Doctor is a high-performance diagnostic suite designed specifically for t
 ## Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/FJ-cyberzilla/Tdoc.git
-cd Tdoc
+git clone https://github.com/FJ-cyberzilla/Termux-Doctor.git
+cd Termux-Doctor
 
 # Initialize environment
 make install
@@ -32,10 +32,10 @@ make run
 - **[Development Guide](DEVELOPMENT.md)**: Coding standards, testing, and contribution workflow.
 
 ## License
-TDoc is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+Termux-Doctor is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Go Migration (Phase 1)
-We are currently migrating TDoc from Python to Golang to ensure strict type safety, idiomatic code, and maintainable architecture using a Clean Architecture approach.
+We are currently migrating Termux-Doctor from Python to Golang to ensure strict type safety, idiomatic code, and maintainable architecture using a Clean Architecture approach.
 
 - `cmd/tdoc/` — Entry point (main).
 - `internal/models/` — Domain models.

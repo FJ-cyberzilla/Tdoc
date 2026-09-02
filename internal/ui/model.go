@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/FJ-cyberzilla/Tdoc/internal/services"
 	"github.com/FJ-cyberzilla/Tdoc/internal/ui/handlers"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +19,7 @@ const (
 	Network
 	Security
 	Sensor
+	DNSLeak
 )
 
 // Styling constants
@@ -50,14 +53,26 @@ type AppModel struct {
 // NewAppModel initializes the UI model.
 func NewAppModel() *AppModel {
 	p := progress.New(progress.WithDefaultGradient())
+
+	// Initialize services with a real runner
+	runner := &services.OSCommandRunner{}
+	dumpsysSvc := services.NewDumpsysService(runner)
+
+	// Fetch initial data
+	dumpsysData, _ := dumpsysSvc.GetDumpsysData(context.Background())
+
+	dashboardHandler := handlers.NewDashboardHandler(p)
+	dashboardHandler.DumpsysData = dumpsysData
+
 	return &AppModel{
 		CurrentView: Dashboard,
 		Progress:    p,
 		Handlers: map[ViewState]handlers.Handler{
-			Dashboard: handlers.NewDashboardHandler(p),
+			Dashboard: dashboardHandler,
 			Network:   handlers.NewNetworkHandler(),
 			Security:  handlers.NewSecurityHandler(),
 			Sensor:    handlers.NewSensorHandler(),
+			DNSLeak:   handlers.NewDNSLeakHandler(),
 		},
 	}
 }
@@ -85,6 +100,8 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.CurrentView = Security
 		case "4":
 			m.CurrentView = Sensor
+		case "5":
+			m.CurrentView = DNSLeak
 		}
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -136,5 +153,5 @@ func renderHeader() string {
 }
 
 func renderNavigation() string {
-	return "Navigate: [1]Dash [2]Net [3]Sec [4]Sens | [q]Quit"
+	return "Navigate: [1]Dash [2]Net [3]Sec [4]Sens [5]DNS | [q]Quit"
 }

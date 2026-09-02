@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/FJ-cyberzilla/Tdoc/internal/models"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/progress"
 )
 
 type DashboardHandler struct {
-	Progress progress.Model
+	Progress    progress.Model
+	DumpsysData models.DumpsysData
 }
 
 func NewDashboardHandler(p progress.Model) *DashboardHandler {
@@ -23,5 +26,6 @@ func (h *DashboardHandler) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (h *DashboardHandler) View(width int, height int) string {
-	return "Dashboard Panel\n\nLive Telemetry...\n" + h.Progress.ViewAs(0.5)
+	return fmt.Sprintf("Dashboard Panel\n\nLive Telemetry...\n%s\n\nSystem Diagnostics (Dumpsys):\nCPU: %s\nMEM: %s",
+		h.Progress.ViewAs(0.5), h.DumpsysData.CPUInfo, h.DumpsysData.MemInfo)
 }

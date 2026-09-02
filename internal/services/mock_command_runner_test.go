@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"strings"
+	"time"
 )
 
 // MockCommandRunner implements CommandRunner for testing purposes.
@@ -14,6 +15,7 @@ type MockCommandRunner struct {
 	// For complex tests
 	responses map[string]string
 	errs      map[string]error
+	delays    map[string]time.Duration
 }
 
 // Run returns the pre-set output or error based on the command and arguments.
@@ -24,6 +26,11 @@ func (m *MockCommandRunner) Run(ctx context.Context, command string, args ...str
 		if len(args) > 0 {
 			key += " " + strings.Join(args, " ")
 		}
+
+		if delay, ok := m.delays[key]; ok {
+			time.Sleep(delay)
+		}
+
 		if err, ok := m.errs[key]; ok {
 			return "", err
 		}
