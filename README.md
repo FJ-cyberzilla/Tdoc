@@ -33,3 +33,13 @@ make run
 
 ## License
 TDoc is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Go Migration (Phase 1)
+We are currently migrating TDoc from Python to Golang to ensure strict type safety, idiomatic code, and maintainable architecture using a Clean Architecture approach.
+
+- `cmd/tdoc/` — Entry point (main).
+- `internal/models/` — Domain models.
+- `internal/services/` — Business logic (interfaces and implementations).
+- `internal/ui/` — UI components and renderers.
+
+We use **manual constructor injection** for wiring services, providing compile-time type safety.

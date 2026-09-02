@@ -1,3 +1,0 @@
-"""
-Android Services Package
-"""
