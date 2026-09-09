@@ -1,4 +1,4 @@
-module github.com/FJ-cyberzilla/Tdoc
+module github.com/FJ-cyberzilla/Termux-Doctor
 
 go 1.27.0
 

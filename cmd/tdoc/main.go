@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/FJ-cyberzilla/Tdoc/internal/ui"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
