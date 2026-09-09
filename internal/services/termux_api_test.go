@@ -27,10 +27,10 @@ func TestTriggerHaptic(t *testing.T) {
 func TestRun(t *testing.T) {
 	mockRunner := &MockCommandRunner{
 		responses: map[string]string{
-			"termux-battery-status":       `{"status": "CHARGING"}`,
-			"termux-wifi-connectioninfo":  `{"ssid": "test-wifi"}`,
+			"termux-battery-status":       `{"percentage": 80, "status": "CHARGING"}`,
+			"termux-wifi-connectioninfo":  `{"ssid": "test-wifi", "ip": "192.168.1.1"}`,
 			"termux-telephony-deviceinfo": `{"imei": "12345"}`,
-			"termux-location":             `{"lat": 0, "lon": 0}`,
+			"termux-location":             `{"latitude": 0, "longitude": 0}`,
 		},
 		errs: map[string]error{},
 	}
@@ -41,12 +41,8 @@ func TestRun(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	battery, ok := data["battery"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("battery is not a map[string]interface{}, got %T", data["battery"])
-	}
-	if battery["status"] != "CHARGING" {
-		t.Errorf("expected CHARGING, got %v", battery["status"])
+	if data.Battery.Data.Status != "CHARGING" {
+		t.Errorf("expected CHARGING, got %v", data.Battery.Data.Status)
 	}
 }
 
@@ -66,11 +62,7 @@ func TestRun_Error(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	wifi, ok := data["wifi"].(map[string]string)
-	if !ok {
-		t.Fatalf("wifi is not a map[string]string, got %T", data["wifi"])
-	}
-	if wifi["status"] != "error" {
-		t.Errorf("expected error status, got %v", wifi["status"])
+	if data.WiFi.Status != "error" {
+		t.Errorf("expected error status, got %v", data.WiFi.Status)
 	}
 }

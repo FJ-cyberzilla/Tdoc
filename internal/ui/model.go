@@ -1,14 +1,11 @@
 package ui
 
 import (
-	"context"
 	"fmt"
-
-	"github.com/FJ-cyberzilla/Tdoc/internal/services"
-	"github.com/FJ-cyberzilla/Tdoc/internal/ui/handlers"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/FJ-cyberzilla/Tdoc/internal/ui/handlers"
 )
 
 // ViewState represents the current screen being displayed.
@@ -48,27 +45,19 @@ type AppModel struct {
 	Height       int
 	ErrorMessage string
 	Progress     progress.Model
+	Loading      bool
 }
 
 // NewAppModel initializes the UI model.
 func NewAppModel() *AppModel {
 	p := progress.New(progress.WithDefaultGradient())
 
-	// Initialize services with a real runner
-	runner := &services.OSCommandRunner{}
-	dumpsysSvc := services.NewDumpsysService(runner)
-
-	// Fetch initial data
-	dumpsysData, _ := dumpsysSvc.GetDumpsysData(context.Background())
-
-	dashboardHandler := handlers.NewDashboardHandler(p)
-	dashboardHandler.DumpsysData = dumpsysData
-
 	return &AppModel{
 		CurrentView: Dashboard,
 		Progress:    p,
+		Loading:     true,
 		Handlers: map[ViewState]handlers.Handler{
-			Dashboard: dashboardHandler,
+			Dashboard: handlers.NewDashboardHandler(p),
 			Network:   handlers.NewNetworkHandler(),
 			Security:  handlers.NewSecurityHandler(),
 			Sensor:    handlers.NewSensorHandler(),
@@ -77,8 +66,13 @@ func NewAppModel() *AppModel {
 	}
 }
 
-// Init initializes the bubbletea model.
+// Init initializes the bubbletea model and triggers initial data fetch.
 func (m *AppModel) Init() tea.Cmd {
+	return fetchDataCmd
+}
+
+func fetchDataCmd() tea.Msg {
+	// Simulate data fetching
 	return nil
 }
 

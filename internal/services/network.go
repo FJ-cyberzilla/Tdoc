@@ -10,7 +10,7 @@ import (
 	"github.com/FJ-cyberzilla/Tdoc/internal/cache"
 )
 
-// NetworkData holds the results of network diagnostic commands.
+// NetworkData holds the results of network diagnostic commands and telemetry.
 type NetworkData struct {
 	Interfaces  string
 	Routes      string
@@ -18,6 +18,8 @@ type NetworkData struct {
 	DNS         []string
 	PingLatency time.Duration
 	DNSLatency  time.Duration
+	DNSError    string
+	PingError   string
 }
 
 // NetworkProvider defines the interface for fetching network diagnostics.
@@ -28,41 +30,49 @@ type NetworkProvider interface {
 // NetworkService implements NetworkProvider.
 type NetworkService struct {
 	runner CommandRunner
-	cache  *cache.Manager
+	cache  *cache.Manager[NetworkData]
 }
 
 // NewNetworkService creates a new instance of NetworkService with the given CommandRunner.
 func NewNetworkService(runner CommandRunner) *NetworkService {
 	return &NetworkService{
 		runner: runner,
-		cache:  cache.NewManager(),
+		cache:  cache.NewManager[NetworkData](),
 	}
 }
 
-func (s *NetworkService) measureLatency(host string) time.Duration {
+func (s *NetworkService) measureLatency(ctx context.Context, host string) (time.Duration, error) {
+	var d net.Dialer
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	start := time.Now()
-	conn, err := net.DialTimeout("tcp", host, 2*time.Second)
+	conn, err := d.DialContext(ctx, "tcp", host)
 	if err != nil {
-		return 0
+		return 0, err
 	}
 	defer conn.Close()
-	return time.Since(start)
+	return time.Since(start), nil
 }
 
-func (s *NetworkService) measureDNSLatency(host string) time.Duration {
+func (s *NetworkService) measureDNSLatency(ctx context.Context, host string) (time.Duration, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	r := &net.Resolver{}
 	start := time.Now()
-	_, err := net.LookupHost(host)
+	_, err := r.LookupHost(ctx, host)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	return time.Since(start)
+	return time.Since(start), nil
 }
 
 // GetNetworkData executes network commands and returns the aggregated results.
 func (s *NetworkService) GetNetworkData(ctx context.Context) (NetworkData, error) {
 	// Try to get interfaces from cache
 	if val, found := s.cache.Get("interfaces"); found {
-		return val.(NetworkData), nil
+		return val, nil
 	}
 
 	var wg sync.WaitGroup
@@ -98,10 +108,30 @@ func (s *NetworkService) GetNetworkData(ctx context.Context) (NetworkData, error
 		return NetworkData{}, fmt.Errorf("failed to get netstat: %w", errNetstat)
 	}
 
-	// Perform diagnostics
-	dns, _ := net.LookupHost("google.com")
-	pingLatency := s.measureLatency("8.8.8.8:53")
-	dnsLatency := s.measureDNSLatency("google.com")
+	// Perform diagnostics without ignoring errors
+	r := &net.Resolver{}
+	dnsCtx, dnsCancel := context.WithTimeout(ctx, 2*time.Second)
+	defer dnsCancel()
+
+	var dns []string
+	var dnsErrStr string
+	dnsHosts, err := r.LookupHost(dnsCtx, "google.com")
+	if err != nil {
+		dnsErrStr = err.Error()
+	} else {
+		dns = dnsHosts
+	}
+
+	pingLatency, err := s.measureLatency(ctx, "8.8.8.8:53")
+	var pingErrStr string
+	if err != nil {
+		pingErrStr = err.Error()
+	}
+
+	dnsLatency, err := s.measureDNSLatency(ctx, "google.com")
+	if err != nil && dnsErrStr == "" {
+		dnsErrStr = err.Error()
+	}
 
 	data := NetworkData{
 		Interfaces:  interfaces,
@@ -110,6 +140,8 @@ func (s *NetworkService) GetNetworkData(ctx context.Context) (NetworkData, error
 		DNS:         dns,
 		PingLatency: pingLatency,
 		DNSLatency:  dnsLatency,
+		DNSError:    dnsErrStr,
+		PingError:   pingErrStr,
 	}
 
 	// Cache the result

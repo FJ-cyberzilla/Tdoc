@@ -6,7 +6,7 @@ import (
 )
 
 func TestCacheManager(t *testing.T) {
-	cm := NewManager()
+	cm := NewManager[string]()
 
 	// Test Set and Get
 	cm.Set("key1", "value1", 100*time.Millisecond)
