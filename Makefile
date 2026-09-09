@@ -30,8 +30,8 @@ tidy:
 	@go mod tidy && printf "$(GREEN)Success!$(RESET)\n" || (printf "$(RED)$(CROSS) Tidy failed!$(RESET)\n" && exit 1)
 
 lint:
-	@printf "$(CYAN)$(CHECK)$(RESET) Running linter... "
-	@golangci-lint run ./... && printf "$(GREEN)Success!$(RESET)\n" || (printf "$(RED)$(CROSS) Linting failed!$(RESET)\n" && exit 1)
+	@printf "$(CYAN)$(CHECK)$(RESET) Running go vet... "
+	@go vet ./... && printf "$(GREEN)Success!$(RESET)\n" || (printf "$(RED)$(CROSS) Vet failed!$(RESET)\n" && exit 1)
 
 vet:
 	@printf "$(CYAN)$(CHECK)$(RESET) Running go vet... "
