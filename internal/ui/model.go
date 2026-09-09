@@ -5,7 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/FJ-cyberzilla/Tdoc/internal/ui/handlers"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/ui/handlers"
 )
 
 // ViewState represents the current screen being displayed.

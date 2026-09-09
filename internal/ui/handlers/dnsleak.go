@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/FJ-cyberzilla/Tdoc/internal/models"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/models"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

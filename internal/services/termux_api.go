@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/FJ-cyberzilla/Tdoc/internal/models"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/models"
 	"golang.org/x/sync/errgroup"
 )
 

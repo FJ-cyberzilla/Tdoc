@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FJ-cyberzilla/Tdoc/internal/models"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/models"
 )
 
 // DNSLeakProvider defines the interface for DNS leak diagnostics.

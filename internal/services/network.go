@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FJ-cyberzilla/Tdoc/internal/cache"
+	"github.com/FJ-cyberzilla/Termux-Doctor/internal/cache"
 )
 
 // NetworkData holds the results of network diagnostic commands and telemetry.
