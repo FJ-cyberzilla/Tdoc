@@ -1,6 +1,6 @@
 graph TD
     %% Main Entry
-    Main[main.py] --> Router[TDocRouter]
+    Main[cmd/tdoc] --> Router[TDocRouter]
     Main --> HUD[HUDController]
     
     %% UI interactions
@@ -13,36 +13,31 @@ graph TD
     Factory --> Platform[PlatformService]
     Factory --> Network[NetworkService]
     Factory --> Security[SecurityService]
-    Factory --> Updater[UpdaterService]
-    Factory --> PkgMgr[PackageManagerService]
     Factory --> Util[UtilityService]
     Factory --> Config[ConfigService]
-    Factory --> Persistence[PersistenceService]
+    Factory --> Cache[CacheLayer]
     
-    %% Utility Tools
-    Util --> Tools[htop/neofetch]
-    Util --> Robustness[robustness.py]
+    %% Models
+    Util --> Models[internal/models]
     
     %% Styles & Constants
-    Router -.-> Const[constants.py]
-    HUD -.-> Theme[core/theme.py]
+    Router -.-> Const[constants]
+    HUD -.-> Theme[internal/ui/theme]
 
     subgraph Core
     Router
     Factory
     Const
     Config
-    Persistence
+    Cache
     end
 
     subgraph Services
     Platform
     Network
     Security
-    Updater
-    PkgMgr
     Util
-    Robustness
+    Models
     end
     
     subgraph View

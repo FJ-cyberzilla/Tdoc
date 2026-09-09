@@ -5,28 +5,27 @@ This guide covers setup, standards, and workflow for contributing to Termux-Doct
 ## 1. Environment Setup
 ```bash
 # Clone the repository
-git clone https://github.com/FJ-cyberzilla/Tdoc.git
-cd Tdoc
+git clone https://github.com/FJ-cyberzilla/Termux-Doctor.git
+cd Termux-Doctor
 
-# Install dependencies (including dev tools like ruff and pytest)
-make install
+# Build the project
+make build
 
 # Run the project
 make run
 ```
 
 ## 2. Coding Standards
-- **Python**: Adhere to PEP 8. Use Google-style docstrings.
-- **Typing**: All parameters and return values must be explicitly typed (`mypy` compliant). Use `async`/`await` for all I/O bound tasks.
-- **Style**: Line length max 100 characters. Use MVC pattern for UI components.
-- **Linting/Formatting**: Use `make lint` for static analysis and `make format` for auto-formatting.
-- **Robustness**: Utilize `src/utils/robustness.py` for transient I/O operations (supports `async`).
+- **Go**: Adhere to Go idioms and formatting (`go fmt`).
+- **Typing**: Ensure Go's strict type safety is maintained throughout the codebase.
+- **Style**: Follow `Effective Go` guidelines. Keep functions focused and maintainable.
+- **Linting/Testing**: Use `make lint` for static analysis and `make test` for comprehensive test coverage.
 
 ## 3. Testing & CI/CD
-- **Unit Tests**: All new features require tests in `tests/`. Use `@pytest.mark.asyncio` for async tests.
-- **Execution**: Use `make test` to run the full suite (`pytest`).
-- **Coverage**: Maintain > 80% test coverage.
-- **CI**: GitHub Actions runs linting, type checking, and tests on push.
+- **Unit Tests**: All new features require tests in the corresponding package (e.g., `internal/services/service_test.go`).
+- **Execution**: Use `make test` to run the full test suite.
+- **Coverage**: Maintain high test coverage for all diagnostic modules.
+- **CI**: GitHub Actions runs linting, vet checks, and tests on push.
 
 ## 4. Contributing Workflow
 1. **Branching**: Use `feature/` or `fix/` prefixes for branches.
